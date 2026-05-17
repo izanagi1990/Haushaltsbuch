@@ -1,0 +1,446 @@
+    <!-- Firebase Scripte (Kompatibilitäts-Modus für lokalen Doppelklick) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
+    <script>
+        // Firebase initialisieren (Ältere Schreibweise ohne Module)
+        const firebaseConfig = {
+            apiKey: "AIzaSyC3GG3kGs4ofwg6qsjWcZC3nkn0SrjVJ3A",
+            authDomain: "haushaltsbuch-4ea86.firebaseapp.com",
+            projectId: "haushaltsbuch-4ea86",
+            storageBucket: "haushaltsbuch-4ea86.firebasestorage.app",
+            messagingSenderId: "639032934816",
+            appId: "1:639032934816:web:a1d42ee5c46982966324c5",
+            measurementId: "G-BSM6HL36QQ"
+        };
+
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore(app);
+        const auth = firebase.auth(auth);
+
+        let currentUser = null;
+        let activeAccountId = null;
+        let unsubscribeRealtime = null;
+
+        let transactions = [];
+        let savingsGoals = {};
+        let recurringExpenses = [];
+        let appliedMonths = [];
+        let currentTheme = localStorage.getItem('theme') || 'light';
+        let financeChart = null;
+        let isLoginMode = true;
+
+        const monthNames = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+
+        // Auth Status Überwachung
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('auth-container').classList.add('hidden');
+                document.getElementById('main-app-container').classList.remove('hidden');
+                
+                await determineActiveAccount(user.uid);
+                startRealtimeListener();
+            } else {
+                currentUser = null;
+                activeAccountId = null;
+                if (unsubscribeRealtime) unsubscribeRealtime();
+                document.getElementById('main-app-container').classList.add('hidden');
+                document.getElementById('auth-container').classList.remove('hidden');
+            }
+        });
+
+        async function determineActiveAccount(uid) {
+            document.getElementById('my-account-id').innerText = uid;
+            
+            const userRef = db.collection("users").doc(uid);
+            const userSnap = await userRef.get();
+            
+            if (userSnap.exists && userSnap.data().partnerId) {
+                activeAccountId = userSnap.data().partnerId;
+                document.getElementById('partner-id-input').value = activeAccountId;
+                document.getElementById('connected-status').classList.remove('hidden');
+            } else {
+                activeAccountId = uid;
+                document.getElementById('partner-id-input').value = '';
+                document.getElementById('connected-status').classList.add('hidden');
+            }
+        }
+
+        function startRealtimeListener() {
+            if (unsubscribeRealtime) unsubscribeRealtime();
+            
+            const docRef = db.collection("haushaltsbuecher").doc(activeAccountId);
+            unsubscribeRealtime = docRef.onSnapshot((docSnap) => {
+                if (docSnap.exists) {
+                    const data = docSnap.data();
+                    transactions = data.transactions || [];
+                    savingsGoals = data.savingsGoals || {};
+                    recurringExpenses = data.recurringExpenses || [];
+                    appliedMonths = data.appliedMonths || [];
+                } else {
+                    transactions = [];
+                    savingsGoals = {};
+                    recurringExpenses = [];
+                    appliedMonths = [];
+                }
+                updateUI();
+            });
+        }
+
+        async function saveCloudData() {
+            if (!activeAccountId) return;
+            try {
+                await db.collection("haushaltsbuecher").doc(activeAccountId).set({
+                    transactions: transactions,
+                    savingsGoals: savingsGoals,
+                    recurringExpenses: recurringExpenses,
+                    appliedMonths: appliedMonths
+                });
+            } catch (e) {
+                console.error("Fehler beim Speichern: ", e);
+            }
+        }
+
+        async function connectPartner() {
+            const inputId = document.getElementById('partner-id-input').value.trim();
+            if (!inputId) {
+                await db.collection("users").doc(currentUser.uid).set({ partnerId: "" });
+                alert("Verknüpfung gelöst. Du nutzt wieder dein eigenes Haushaltsbuch.");
+                await determineActiveAccount(currentUser.uid);
+                startRealtimeListener();
+                return;
+            }
+
+            if (inputId === currentUser.uid) {
+                alert("Du kannst dich nicht mit deiner eigenen ID verbinden.");
+                return;
+            }
+
+            await db.collection("users").doc(currentUser.uid).set({ partnerId: inputId });
+            alert("Erfolgreich verbunden! Die App lädt nun die gemeinsamen Daten.");
+            await determineActiveAccount(currentUser.uid);
+            startRealtimeListener();
+        }
+
+        async function handleAuth() {
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value;
+
+            if (!email || !password) {
+                alert("Bitte fülle alle Felder aus.");
+                return;
+            }
+
+            try {
+                if (isLoginMode) {
+                    await auth.signInWithEmailAndPassword(email, password);
+                } else {
+                    await auth.createUserWithEmailAndPassword(email, password);
+                    alert("Konto erfolgreich erstellt!");
+                }
+            } catch (error) {
+                alert("Fehler: " + error.message);
+            }
+        }
+
+        function handleLogout() {
+            auth.signOut();
+        }
+
+        function toggleAuthMode() {
+            isLoginMode = !isLoginMode;
+            document.getElementById('auth-title').innerText = isLoginMode ? "🔑 Anmelden" : "📝 Registrieren";
+            document.getElementById('auth-submit-btn').innerText = isLoginMode ? "Einloggen" : "Konto erstellen";
+            document.getElementById('auth-toggle-btn').innerText = isLoginMode ? "Noch kein Konto? Jetzt registrieren" : "Bereits ein Konto? Hier einloggen";
+        }
+
+        // --- AB HIER DIE BEKANNTE LOGIK ---
+
+        function setDefaultDate() {
+            const today = new Date().toISOString().split('T')[0];
+            const dateInput = document.getElementById('transaction-date');
+            if (dateInput) dateInput.value = today;
+        }
+
+        function applyTheme() {
+            const body = document.getElementById('app-body');
+            const btn = document.getElementById('theme-btn');
+            if (currentTheme === 'dark') {
+                body.className = "font-sans min-h-screen pb-10 dark-mode";
+                btn.innerText = "🌙";
+            } else {
+                body.className = "font-sans min-h-screen pb-10 light-mode";
+                btn.innerText = "☀️";
+            }
+            localStorage.setItem('theme', currentTheme);
+        }
+
+        function toggleTheme() {
+            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+            applyTheme();
+            updateUI();
+        }
+
+        function openSettings() {
+            document.getElementById('settings-modal').classList.remove('opacity-0', 'pointer-events-none');
+            renderRecurringList();
+        }
+
+        function closeSettings() {
+            document.getElementById('settings-modal').classList.add('opacity-0', 'pointer-events-none');
+        }
+
+        function addRecurringExpense() {
+            const descEl = document.getElementById('rec-description');
+            const amtEl = document.getElementById('rec-amount');
+            const catEl = document.getElementById('rec-category');
+
+            const description = descEl.value.trim();
+            const amount = parseFloat(amtEl.value);
+            const category = catEl.value;
+
+            if (!description || isNaN(amount) || amount <= 0) {
+                alert('Bitte trage Name und Betrag ein.');
+                return;
+            }
+
+            recurringExpenses.push({ description, amount, category });
+            descEl.value = '';
+            amtEl.value = '';
+            
+            renderRecurringList();
+            checkAndApplyRecurring();
+            saveCloudData();
+        }
+
+        function deleteRecurringExpense(index) {
+            recurringExpenses.splice(index, 1);
+            renderRecurringList();
+            saveCloudData();
+        }
+
+        function renderRecurringList() {
+            const container = document.getElementById('recurring-list');
+            container.innerHTML = '';
+
+            if (recurringExpenses.length === 0) {
+                container.innerHTML = '<p class="text-xs text-muted text-center py-2">Keine wiederkehrenden Kosten eingerichtet.</p>';
+                return;
+            }
+
+            recurringExpenses.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'flex justify-between items-center p-2 rounded-lg bg-gray-500/5 border border-gray-500/10 text-xs';
+                div.innerHTML = `
+                    <div>
+                        <p class="font-medium text-title">${item.description}</p>
+                        <p class="text-[10px] text-muted">${item.category}</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="font-bold text-rose-500">-${item.amount.toFixed(2)} €</span>
+                        <button id="del-rec-${index}" class="text-gray-400 hover:text-rose-500 text-sm font-bold">&times;</button>
+                    </div>
+                `;
+                container.appendChild(div);
+                document.getElementById(`del-rec-${index}`).addEventListener('click', () => deleteRecurringExpense(index));
+            });
+        }
+
+        function checkAndApplyRecurring() {
+            const filterEl = document.getElementById('month-filter');
+            if (!filterEl) return;
+            const selectedMonthStr = filterEl.value;
+            const today = new Date().toISOString().split('T')[0];
+            
+            if (!appliedMonths.includes(selectedMonthStr)) {
+                recurringExpenses.forEach(rec => {
+                    transactions.push({
+                        description: rec.description + ' (Fixkosten)',
+                        amount: rec.amount,
+                        category: rec.category,
+                        type: 'expense',
+                        date: today,
+                        monthStr: selectedMonthStr
+                    });
+                });
+                
+                if (recurringExpenses.length > 0) {
+                    appliedMonths.push(selectedMonthStr);
+                    saveCloudData();
+                }
+            }
+        }
+
+        function initMonthFilter() {
+            const filter = document.getElementById('month-filter');
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth();
+            filter.innerHTML = '';
+
+            for (let i = -6; i <= 6; i++) {
+                const d = new Date(currentYear, currentMonth + i, 1);
+                const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                const option = document.createElement('option');
+                option.value = val;
+                option.innerText = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+                if (i === 0) option.selected = true;
+                filter.appendChild(option);
+            }
+        }
+
+        function saveSavingsGoal() {
+            const selectedMonthStr = document.getElementById('month-filter').value;
+            const goalInput = document.getElementById('savings-goal-input');
+            const goalValue = parseFloat(goalInput.value);
+
+            if (isNaN(goalValue) || goalValue < 0) {
+                alert('Bitte trage ein gültiges Sparziel ein.');
+                return;
+            }
+
+            savingsGoals[selectedMonthStr] = goalValue;
+            updateUI();
+            saveCloudData();
+        }
+
+        function renderChart(income, expense, goal) {
+            const ctx = document.getElementById('financeChart').getContext('2d');
+            const isDark = currentTheme === 'dark';
+            const textColor = isDark ? '#9ca3af' : '#4b5563';
+            const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)';
+
+            if (financeChart) {
+                financeChart.destroy();
+            }
+
+            financeChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Einnahmen', 'Ausgaben', 'Sparziel'],
+                    datasets: [{
+                        data: [income, expense, goal],
+                        backgroundColor: [
+                            'rgba(16, 185, 129, 0.75)',
+                            'rgba(244, 63, 94, 0.75)',
+                            'rgba(59, 130, 246, 0.75)'
+                        ],
+                        borderColor: [
+                            '#10b981', '#f43f5e', '#3b82f6'
+                        ],
+                        borderWidth: 1.5,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: {
+                            ticks: { color: textColor, font: { family: 'sans-serif', size: 11 } },
+                            grid: { display: false }
+                        },
+                        y: {
+                            ticks: { color: textColor, font: { family: 'sans-serif', size: 10 } },
+                            grid: { color: gridColor }
+                        }
+                    }
+                }
+            });
+        }
+
+        function formatDateString(dateStr) {
+            if (!dateStr) return "";
+            const parts = dateStr.split("-");
+            if (parts.length !== 3) return dateStr;
+            return `${parts[2]}.${parts[1]}.${parts[0]}`;
+        }
+
+        function updateUI() {
+            checkAndApplyRecurring();
+
+            const list = document.getElementById('transaction-list');
+            const totalBalanceEl = document.getElementById('total-balance');
+            const carryOverEl = document.getElementById('carry-over-info');
+            const filterEl = document.getElementById('month-filter');
+            if (!filterEl || !filterEl.value) return;
+            const selectedMonthStr = filterEl.value;
+            
+            list.innerHTML = '';
+            let carryOver = 0;
+            let monthIncome = 0;
+            let monthExpense = 0;
+            let monthSavings = 0;
+
+            transactions.forEach((t) => {
+                const tAmount = t.type === 'income' ? t.amount : -t.amount;
+                if (t.monthStr < selectedMonthStr) {
+                    carryOver += tAmount;
+                } else if (t.monthStr === selectedMonthStr) {
+                    if (t.type === 'income') monthIncome += t.amount;
+                    if (t.type === 'expense') monthExpense += t.amount;
+                    if (t.type === 'savings') monthSavings += t.amount;
+                }
+            });
+
+            let monthTotal = monthIncome - monthExpense - monthSavings;
+            let finalTotal = carryOver + monthTotal;
+            
+            const currentGoal = savingsGoals[selectedMonthStr] || 0;
+            document.getElementById('savings-goal-input').value = currentGoal > 0 ? currentGoal : '';
+
+            const progressContainer = document.getElementById('progress-container');
+            if (currentGoal > 0) {
+                progressContainer.classList.remove('hidden');
+                let percent = Math.min(100, Math.round((monthSavings / currentGoal) * 100));
+                
+                document.getElementById('progress-text').innerText = `Ziel erreicht: ${percent}%`;
+                document.getElementById('goal-status-text').innerText = `${monthSavings.toFixed(2).replace('.', ',')} / ${currentGoal.toFixed(0)} €`;
+                document.getElementById('progress-bar').style.width = `${percent}%`;
+                document.getElementById('savings-detail-text').innerText = `Bereits erspart: ${monthSavings.toFixed(2).replace('.', ',')} € von ${currentGoal.toFixed(2).replace('.', ',')} €`;
+                
+                if (percent >= 100) {
+                    document.getElementById('progress-bar').className = "bg-emerald-500 h-2.5 rounded-full transition-all duration-500";
+                    document.getElementById('savings-detail-text').className = "text-xs font-medium text-center text-emerald-500";
+                } else {
+                    document.getElementById('progress-bar').className = "bg-blue-500 h-2.5 rounded-full transition-all duration-500";
+                    document.getElementById('savings-detail-text').className = "text-xs font-medium text-center text-blue-500";
+                }
+            } else {
+                progressContainer.classList.add('hidden');
+            }
+
+            renderChart(monthIncome, monthExpense + monthSavings, currentGoal);
+
+            const currentMonthTransactions = transactions.filter(t => t.monthStr === selectedMonthStr);
+
+            if (currentMonthTransactions.length === 0) {
+                list.innerHTML = `<p class="text-muted text-center py-4 text-sm font-light">Keine Einträge in diesem Monat.</p>`;
+            } else {
+                currentMonthTransactions.sort((a, b) => {
+                    if ((a.date || "") < (b.date || "")) return 1;
+                    if ((a.date || "") > (b.date || "")) return -1;
+                    return 0;
+                });
+
+                currentMonthTransactions.forEach((t) => {
+                    const actualIndex = transactions.indexOf(t);
+                    const isIncome = t.type === 'income';
+                    const isSavings = t.type === 'savings';
+                    const item = document.createElement('div');
+                    
+                    if (currentTheme === 'dark') {
+                        if (isIncome) item.className = 'flex justify-between items-center p-3 rounded-xl border bg-emerald-950/30 border-emerald-900/40';
+                        else if (isSavings) item.className = 'flex justify-between items-center p-3 rounded-xl border bg-blue-950/30 border-blue-900/40';
+                        else item.className = 'flex justify-between items-center p-3 rounded-xl border bg-rose-950/30 border-rose-900/40';
+                    } else {
+                        if (isIncome) item.className = 'flex justify-between items-center p-3 rounded-xl border bg-emerald-50/60 border-emerald-100';
+                        else if (isSavings) item.className = 'flex justify-between items-center p-3 rounded-xl border bg-blue-50/60 border-blue-100';
+                        else item.className = 'flex justify-between items-center p-3 rounded-xl border bg-rose-50/60 border-rose-100';
+                    }
+                    
+                    const displayDate = t.date ? formatDateString(t.date) : "";
+                    const categoryText = displayDate ? `${t
