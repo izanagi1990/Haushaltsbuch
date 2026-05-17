@@ -126,7 +126,7 @@
                     <label class="block text-xs font-semibold uppercase tracking-wider text-muted mb-1">Gesamt-Sparziel für das komplette Jahr festlegen</label>
                     <div class="flex space-x-2">
                         <input type="number" id="savings-goal-input" step="0.01" placeholder="z.B. 6000 für das ganze Jahr" class="flex-1 p-2 rounded-xl border border-custom bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
-                        <button id="save-goal-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 rounded-xl text-sm transition shadow-sm">Jahresziel保存</button>
+                        <button id="save-goal-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 rounded-xl text-sm transition shadow-sm">Jahresziel speichern</button>
                     </div>
                 </div>
             </div>
@@ -376,7 +376,6 @@
             const titleEl = document.getElementById('events-list-title');
             const today = new Date().toISOString().split('T')[0];
             
-            // Präzise Sortierung: Datum vergleichen, bei Gleichheit die Uhrzeit vergleichen
             let valid = familyEvents.filter(e => e.date >= today).sort((a,b) => {
                 if (a.date !== b.date) {
                     return a.date.localeCompare(b.date);
@@ -384,9 +383,8 @@
                 const timeA = a.time || "00:00";
                 const timeB = b.time || "00:00";
                 return timeA.localeCompare(timeB);
-            }).slice(0, 5); // Kapazität auf die nächsten 5 Termine erhöht
+            }).slice(0, 5);
             
-            // Dynamischer Titel je nach Anzahl der Termine
             if (valid.length === 0) {
                 titleEl.innerText = "📌 Keine anstehenden Termine";
                 container.innerHTML = '<p class="text-xs text-muted text-center py-4">Keine Termine.</p>'; 
