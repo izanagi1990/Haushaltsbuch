@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unser Haushaltsbuch</title>
+    <title>Unser Haushaltsbuch & Familienkalender</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <!-- Chart.js für das Diagramm -->
@@ -15,6 +15,8 @@
             --text-title: #1f2937;
             --text-muted: #6b7280;
             --border-color: #e5e7eb;
+            --select-bg: #ffffff;
+            --select-text: #1f2937;
         }
         .dark-mode {
             --bg-main: #0f172a;
@@ -22,12 +24,23 @@
             --text-title: #f3f4f6;
             --text-muted: #9ca3af;
             --border-color: #334155;
+            --select-bg: #1e293b;
+            --select-text: #f3f4f6;
         }
         body { background-color: var(--bg-main); color: var(--text-title); transition: all 0.3s ease; }
         .app-card { background-color: var(--bg-card); border-color: var(--border-color); }
         .text-title { color: var(--text-title); }
         .text-muted { color: var(--text-muted); }
         .border-custom { border-color: var(--border-color); }
+        
+        .custom-select {
+            background-color: var(--bg-card) !important;
+            color: var(--text-title) !important;
+        }
+        .custom-select option {
+            background-color: var(--bg-card) !important;
+            color: var(--text-title) !important;
+        }
     </style>
 </head>
 <body id="app-body" class="font-sans min-h-screen pb-10 light-mode">
@@ -35,7 +48,7 @@
     <!-- HEADER -->
     <header class="app-card border-b border-custom shadow-sm sticky top-0 z-40">
         <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
-            <h1 class="text-xl font-bold tracking-tight">📊 Haushaltsbuch</h1>
+            <h1 class="text-xl font-bold tracking-tight">📊 Haushaltsbuch & Kalender</h1>
             <div class="flex items-center space-x-2">
                 <button id="toggle-partner-area-btn" class="hidden p-2 rounded-lg bg-gray-500/10 hover:bg-gray-500/20 font-medium text-xs transition">🔗 Partner verknüpfen</button>
                 <button id="theme-btn" class="p-2 rounded-lg bg-gray-500/10 hover:bg-gray-500/20 text-lg transition">☀️</button>
@@ -47,7 +60,7 @@
     <!-- MAIN CONTAINER -->
     <main class="max-w-4xl mx-auto px-4 mt-6">
 
-        <!-- 1. AUTHENTIFIZIERUNG (LOGIN / REGISTRIERUNG) -->
+        <!-- 1. AUTHENTIFIZIERUNG -->
         <div id="auth-container" class="max-w-md mx-auto app-card rounded-2xl p-6 border border-custom shadow-xl mt-12">
             <h2 id="auth-title" class="text-xl font-bold text-center mb-6">🔑 Anmelden</h2>
             <div class="space-y-4">
@@ -64,10 +77,10 @@
             </div>
         </div>
 
-        <!-- Haupt-Inhalt (Standardmäßig versteckt bis Login) -->
+        <!-- Haupt-Inhalt -->
         <div id="main-app-container" class="space-y-6 hidden">
 
-            <!-- PARTNER VERKNÜPFUNG (Einklappbar) -->
+            <!-- PARTNER VERKNÜPFUNG -->
             <div id="partner-container" class="app-card rounded-2xl p-4 border border-custom shadow-sm grid grid-cols-1 md:grid-cols-2 gap-4 items-center hidden">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-wider text-muted">Deine ID (Für deinen Partner):</p>
@@ -83,13 +96,36 @@
                 </div>
             </div>
 
+            <!-- FAMILIENKALENDER -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Termin-Eingabe -->
+                <div class="app-card rounded-2xl p-4 border border-custom shadow-sm flex flex-col justify-between">
+                    <div>
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-muted mb-3">📅 Neuen Termin planen</h4>
+                        <div class="space-y-2">
+                            <input type="text" id="event-title" placeholder="Was steht an? (z.B. GEZ zahlen)" class="w-full p-2 rounded-xl border border-custom bg-transparent text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
+                            <input type="date" id="event-date" class="w-full p-2 rounded-xl border border-custom bg-transparent text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    <button id="add-event-btn" class="w-full mt-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-xl text-xs transition shadow-sm">Termin hinzufügen</button>
+                </div>
+
+                <!-- Termin-Anzeige -->
+                <div class="app-card rounded-2xl p-4 border border-custom shadow-sm md:col-span-2 flex flex-col justify-between">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-muted mb-2">📌 Die nächsten 2 Familien-Termine</h4>
+                    <div id="upcoming-events-list" class="space-y-2 flex-1 flex flex-col justify-center">
+                        <!-- Termine werden dynamisch geladen -->
+                    </div>
+                </div>
+            </div>
+
             <!-- FILTER & JAHRES-SPARZIEL -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="app-card rounded-2xl p-4 border border-custom shadow-sm">
                     <label class="block text-xs font-semibold uppercase tracking-wider text-muted mb-1">Monat auswählen</label>
-                    <select id="month-filter" class="w-full p-2 rounded-xl border border-custom bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"></select>
+                    <select id="month-filter" class="custom-select w-full p-2 rounded-xl border border-custom text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer transition-colors duration-200"></select>
                 </div>
-                <div class="app-card rounded-2xl p-4 border border-custom shadow-sm md:col-span-2 flex flex-col justify-between">
+                <div id="savings-goal-card" class="app-card rounded-2xl p-4 border border-custom shadow-sm md:col-span-2 flex flex-col justify-between transition-all duration-300">
                     <label class="block text-xs font-semibold uppercase tracking-wider text-muted mb-1">Gesamt-Sparziel für das komplette Jahr festlegen</label>
                     <div class="flex space-x-2">
                         <input type="number" id="savings-goal-input" step="0.01" placeholder="z.B. 6000 für das ganze Jahr" class="flex-1 p-2 rounded-xl border border-custom bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
@@ -100,14 +136,12 @@
 
             <!-- FINANZ-ÜBERSICHT & CHART -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Finanzen Text -->
                 <div class="app-card rounded-2xl p-5 border border-custom shadow-sm flex flex-col justify-center">
                     <p class="text-xs font-semibold uppercase tracking-wider text-muted">Aktueller Kontostand</p>
                     <h3 id="total-balance" class="text-3xl font-bold mt-1">0,00 €</h3>
                     <p id="carry-over-info" class="text-[11px] text-muted mt-2 border-t border-custom pt-2 font-light">Übertrag aus Vormonaten: 0,00 €</p>
                     <button id="open-settings-btn" class="w-full mt-4 bg-gray-500/10 hover:bg-gray-500/20 text-title text-xs font-semibold py-2 rounded-xl transition">⚙ Fixkosten verwalten</button>
                 </div>
-                <!-- Chart Box -->
                 <div class="app-card rounded-2xl p-4 border border-custom shadow-sm md:col-span-2 h-48 flex items-center justify-center">
                     <canvas id="financeChart"></canvas>
                 </div>
@@ -119,13 +153,13 @@
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
                     <input type="text" id="description" placeholder="Name / Beschreibung" class="p-2.5 rounded-xl border border-custom bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
                     <input type="number" id="amount" step="0.01" placeholder="Betrag (€)" class="p-2.5 rounded-xl border border-custom bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
-                    <select id="category" class="p-2.5 rounded-xl border border-custom bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
-                        <option value="Gehalt/Einnahme" class="text-gray-800">💰 Gehalt / Einnahme</option>
-                        <option value="Lebensmittel" class="text-gray-800">🛒 Lebensmittel</option>
-                        <option value="Wohnen/Miete" class="text-gray-800">🏠 Wohnen & Energie</option>
-                        <option value="Freizeit/Auto" class="text-gray-800">🚗 Freizeit & Transport</option>
-                        <option value="Versicherung/Abo" class="text-gray-800">📄 Verträge & Abos</option>
-                        <option value="Sonstiges" class="text-gray-800">📦 Sonstiges</option>
+                    <select id="category" class="custom-select p-2.5 rounded-xl border border-custom text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        <option value="Gehalt/Einnahme">💰 Gehalt / Einnahme</option>
+                        <option value="Lebensmittel">🛒 Lebensmittel</option>
+                        <option value="Wohnen/Miete">🏠 Wohnen & Energie</option>
+                        <option value="Freizeit/Auto">🚗 Freizeit & Transport</option>
+                        <option value="Versicherung/Abo">📄 Verträge & Abos</option>
+                        <option value="Sonstiges">📦 Sonstiges</option>
                     </select>
                     <input type="date" id="transaction-date" class="p-2.5 rounded-xl border border-custom bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
                 </div>
@@ -157,19 +191,19 @@
         </div>
     </main>
 
-    <!-- SETTINGS MODAL (FIXKOSTEN) -->
+    <!-- SETTINGS MODAL -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none transition-opacity duration-300">
         <div class="app-card rounded-2xl p-5 border border-custom max-w-md w-full shadow-2xl space-y-4">
             <div class="flex justify-between items-center border-b border-custom pb-2">
                 <h3 class="text-base font-bold">⚙ Monatliche Fixkosten (Automatisch)</h3>
                 <button id="close-settings-btn" class="text-xl text-muted hover:text-title font-bold">&times;</button>
             </div>
-            <p class="text-xs text-muted leading-relaxed">Hier eingerichtete Beträge werden in jedem neuen Monat automatisch als Ausgabe vom Haushaltsbuch verbucht, sobald du den Monat das erste Mal öffnest.</p>
+            <p class="text-xs text-muted leading-relaxed">Hier eingerichtete Beträge werden in jedem neuen Monat automatisch als Ausgabe vom Haushaltsbuch verbucht.</p>
             <div class="grid grid-cols-1 gap-2 border border-custom p-3 rounded-xl bg-gray-500/5">
                 <input type="text" id="rec-description" placeholder="z.B. Netflix, Miete..." class="p-2 rounded-lg border border-custom bg-transparent text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
                 <div class="flex space-x-2">
                     <input type="number" id="rec-amount" step="0.01" placeholder="Betrag (€)" class="w-1/2 p-2 rounded-lg border border-custom bg-transparent text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
-                    <select id="rec-category" class="w-1/2 p-2 rounded-lg border border-custom bg-transparent text-xs text-gray-800 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    <select id="rec-category" class="custom-select w-1/2 p-2 rounded-lg border border-custom text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
                         <option value="Wohnen/Miete">🏠 Wohnen & Energie</option>
                         <option value="Versicherung/Abo">📄 Verträge & Abos</option>
                         <option value="Sonstiges">📦 Sonstiges</option>
@@ -187,7 +221,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 
     <script>
-        // Firebase Konfiguration
         const firebaseConfig = {
             apiKey: "AIzaSyC3GG3kGs4ofwg6qsjWcZC3nkn0SrjVJ3A",
             authDomain: "haushaltsbuch-4ea86.firebaseapp.com",
@@ -198,27 +231,25 @@
             measurementId: "G-BSM6HL36QQ"
         };
 
-        // Firebase Instanzen initialisieren
         const app = firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore(app);
         const auth = firebase.auth();
 
-        // App-Variablen
         let currentUser = null;
         let activeAccountId = null;
         let unsubscribeRealtime = null;
 
         let transactions = [];
-        let savingsGoals = {}; // Format ab jetzt: {"2026": 5000} statt Monats-Strings
+        let savingsGoals = {};
         let recurringExpenses = [];
         let appliedMonths = [];
+        let familyEvents = []; 
         let currentTheme = localStorage.getItem('theme') || 'light';
         let financeChart = null;
         let isLoginMode = true;
 
         const monthNames = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
 
-        // --- AUTH LOGIK ---
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 currentUser = user;
@@ -265,16 +296,19 @@
                     savingsGoals = data.savingsGoals || {};
                     recurringExpenses = data.recurringExpenses || [];
                     appliedMonths = data.appliedMonths || [];
+                    familyEvents = data.familyEvents || []; 
                 } else {
                     transactions = [];
                     savingsGoals = {};
                     recurringExpenses = [];
                     appliedMonths = [];
+                    familyEvents = [];
                 }
                 updateUI();
             });
         }
 
+        // KORREKTUR HIER: { merge: true } sorgt dafür, dass keine Daten beim Überschreiben verloren gehen!
         async function saveCloudData() {
             if (!activeAccountId) return;
             try {
@@ -282,8 +316,9 @@
                     transactions: transactions,
                     savingsGoals: savingsGoals,
                     recurringExpenses: recurringExpenses,
-                    appliedMonths: appliedMonths
-                });
+                    appliedMonths: appliedMonths,
+                    familyEvents: familyEvents 
+                }, { merge: true });
             } catch (e) {
                 console.error("Fehler beim Speichern: ", e);
             }
@@ -339,9 +374,94 @@
             document.getElementById('auth-toggle-btn').innerText = isLoginMode ? "Noch kein Konto? Jetzt registrieren" : "Bereits ein Konto? Hier einloggen";
         }
 
-        // --- APP LOGIK ---
+        // --- CALENDAR LOGIK ---
+        function addFamilyEvent() {
+            const titleEl = document.getElementById('event-title');
+            const dateEl = document.getElementById('event-date');
+            const title = titleEl.value.trim();
+            const date = dateEl.value;
+
+            if (!title || !date) {
+                alert("Bitte gib einen Namen und ein Datum für den Termin ein.");
+                return;
+            }
+
+            familyEvents.push({ title, date, id: Date.now().toString() });
+            titleEl.value = '';
+            dateEl.value = new Date().toISOString().split('T')[0];
+
+            updateUI();
+            saveCloudData();
+        }
+
+        function deleteFamilyEvent(eventId) {
+            familyEvents = familyEvents.filter(e => e.id !== eventId);
+            updateUI();
+            saveCloudData();
+        }
+
+        function renderUpcomingEvents() {
+            const container = document.getElementById('upcoming-events-list');
+            container.innerHTML = '';
+
+            const todayStr = new Date().toISOString().split('T')[0];
+
+            // 1. Filtere abgelaufene Termine heraus
+            let validEvents = familyEvents.filter(e => e.date >= todayStr);
+
+            // Falls Termine im Hintergrund bereinigt wurden, speichern wir das direkt
+            if (validEvents.length !== familyEvents.length) {
+                familyEvents = validEvents;
+                saveCloudData();
+            }
+
+            // 2. Chronologisch sortieren
+            validEvents.sort((a, b) => a.date.localeCompare(b.date));
+
+            // 3. Nur die nächsten 2 Termine holen
+            const topTwoEvents = validEvents.slice(0, 2);
+
+            if (topTwoEvents.length === 0) {
+                container.innerHTML = '<p class="text-xs text-muted text-center py-4 font-light">Keine kommenden Termine geplant.</p>';
+                return;
+            }
+
+            topTwoEvents.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'flex justify-between items-center p-2.5 rounded-xl border border-custom bg-gray-500/5 transition-all';
+                div.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="bg-blue-500/10 text-blue-500 p-2 rounded-lg text-center min-w-[50px]">
+                            <p class="text-[10px] font-bold uppercase">${formatDateToDayMonth(item.date).month}</p>
+                            <p class="text-sm font-extrabold leading-none">${formatDateToDayMonth(item.date).day}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-title leading-tight">${item.title}</p>
+                            <p class="text-[11px] text-muted">${formatDateString(item.date)}</p>
+                        </div>
+                    </div>
+                    <button id="del-event-${item.id}" class="text-gray-400 hover:text-rose-500 transition text-lg px-2">&times;</button>
+                `;
+                container.appendChild(div);
+                document.getElementById(`del-event-${item.id}`).addEventListener('click', () => deleteFamilyEvent(item.id));
+            });
+        }
+
+        function formatDateToDayMonth(dateStr) {
+            const parts = dateStr.split("-");
+            if(parts.length !== 3) return { day: "00", month: "??? "};
+            const d = new Date(parts[0], parts[1] - 1, parts[2]);
+            const shortMonths = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
+            return {
+                day: parts[2],
+                month: shortMonths[d.getMonth()]
+            };
+        }
+
+        // --- RESTLICHE APP LOGIK ---
         function setDefaultDate() {
             document.getElementById('transaction-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('event-date').value = new Date().toISOString().split('T')[0];
         }
 
         function applyTheme() {
@@ -468,7 +588,7 @@
         function saveSavingsGoal() {
             const filterEl = document.getElementById('month-filter');
             if (!filterEl || !filterEl.value) return;
-            const currentYearStr = filterEl.value.split('-')[0]; // Extrahiert das Jahr, z.B. "2026"
+            const currentYearStr = filterEl.value.split('-')[0];
             
             const goalInput = document.getElementById('savings-goal-input');
             const goalValue = parseFloat(goalInput.value);
@@ -523,23 +643,27 @@
 
         function updateUI() {
             checkAndApplyRecurring();
+            renderUpcomingEvents(); 
+
             const list = document.getElementById('transaction-list');
             const totalBalanceEl = document.getElementById('total-balance');
             const carryOverEl = document.getElementById('carry-over-info');
             const filterEl = document.getElementById('month-filter');
             if (!filterEl || !filterEl.value) return;
             const selectedMonthStr = filterEl.value;
-            const currentYearStr = selectedMonthStr.split('-')[0]; // "2026"
+            
+            const systemYear = new Date().getFullYear();
+            const currentYearStr = selectedMonthStr.split('-')[0];
+            const isYearPast = parseInt(currentYearStr) < systemYear;
             
             list.innerHTML = '';
             let carryOver = 0, monthIncome = 0, monthExpense = 0, monthSavings = 0;
-            let totalYearlySavings = 0; // Berechnet das Ersparte fürs gesamte Jahr
+            let totalYearlySavings = 0;
 
             transactions.forEach((t) => {
                 const tAmount = t.type === 'income' ? t.amount : -t.amount;
                 const tYear = t.monthStr ? t.monthStr.split('-')[0] : "";
 
-                // Kontostands-Berechnungen
                 if (t.monthStr < selectedMonthStr) {
                     carryOver += tAmount;
                 } else if (t.monthStr === selectedMonthStr) {
@@ -548,7 +672,6 @@
                     if (t.type === 'savings') monthSavings += t.amount;
                 }
 
-                // Jahres-Sparsumme berechnen
                 if (tYear === currentYearStr && t.type === 'savings') {
                     totalYearlySavings += t.amount;
                 }
@@ -557,11 +680,21 @@
             let monthTotal = monthIncome - monthExpense - monthSavings;
             let finalTotal = carryOver + monthTotal;
             
-            // Jahresziel laden
             const currentYearlyGoal = savingsGoals[currentYearStr] || 0;
-            document.getElementById('savings-goal-input').value = currentYearlyGoal > 0 ? currentYearlyGoal : '';
+            const isGoalReached = currentYearlyGoal > 0 && totalYearlySavings >= currentYearlyGoal;
 
-            // Fortschrittsbalken für das Kalenderjahr steuern
+            const goalCard = document.getElementById('savings-goal-card');
+            
+            if (currentYearlyGoal <= 0) {
+                goalCard.classList.remove('hidden');
+                document.getElementById('savings-goal-input').value = '';
+            } else if (isYearPast || isGoalReached) {
+                goalCard.classList.remove('hidden');
+                document.getElementById('savings-goal-input').value = currentYearlyGoal;
+            } else {
+                goalCard.classList.add('hidden');
+            }
+
             const progressContainer = document.getElementById('progress-container');
             if (currentYearlyGoal > 0) {
                 progressContainer.classList.remove('hidden');
@@ -671,7 +804,6 @@
             updateUI(); saveCloudData();
         }
 
-        // Event Listener verknüpfen
         document.getElementById('theme-btn').addEventListener('click', toggleTheme);
         document.getElementById('logout-btn').addEventListener('click', () => auth.signOut());
         document.getElementById('toggle-partner-area-btn').addEventListener('click', togglePartnerArea);
@@ -682,12 +814,12 @@
         document.getElementById('open-settings-btn').addEventListener('click', openSettings);
         document.getElementById('close-settings-btn').addEventListener('click', closeSettings);
         document.getElementById('add-rec-btn').addEventListener('click', addRecurringExpense);
+        document.getElementById('add-event-btn').addEventListener('click', addFamilyEvent); 
         
         document.getElementById('add-income-btn').addEventListener('click', () => addTransaction('income'));
         document.getElementById('add-expense-btn').addEventListener('click', () => addTransaction('expense'));
         document.getElementById('add-savings-btn').addEventListener('click', () => addTransaction('savings'));
 
-        // App-Start
         initMonthFilter();
         setDefaultDate();
         applyTheme();
