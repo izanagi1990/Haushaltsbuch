@@ -2,10 +2,13 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemeinsame Einkaufsliste</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Einkaufsliste - Haushaltsbuch</title>
     
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link class="apple-touch-icon" href="app-icon.png?v=1">
+    <link class="icon" type="image/png" href="app-icon.png?v=1">
+    
+    <script src="https://cdn.jsdelivr.net/play-cdn"></script>
     <style>
         .light-mode {
             --bg-main: #f3f4f6;
@@ -21,7 +24,7 @@
             --text-muted: #9ca3af;
             --border-color: #334155;
         }
-        body { background-color: var(--bg-main); color: var(--text-title); transition: all 0.3s ease; }
+        body { background-color: var(--bg-main); color: var(--text-title); transition: all 0.3s ease; overflow-x: hidden; }
         .app-card { background-color: var(--bg-card); border-color: var(--border-color); }
         .text-title { color: var(--text-title); }
         .text-muted { color: var(--text-muted); }
@@ -30,38 +33,52 @@
 </head>
 <body id="app-body" class="font-sans min-h-screen pb-10 light-mode">
 
-    <header class="app-card border-b border-custom shadow-sm sticky top-0 z-40">
-        <div class="max-w-xl mx-auto px-4 py-3 flex justify-between items-center">
-            <h1 class="text-xl font-bold tracking-tight">🛒 Einkaufsliste</h1>
-            <a href="index.html" class="p-2 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 font-semibold text-xs transition">📊 Zum Haushaltsbuch</a>
+    <header class="app-card border-b border-custom shadow-sm sticky top-0 z-40 w-full overflow-x-hidden">
+        <div class="max-w-4xl mx-auto px-3 py-2 flex justify-between items-center gap-2">
+            <h1 class="text-base sm:text-xl font-bold tracking-tight truncate max-w-[140px] sm:max-w-none">
+                <span class="sm:hidden">🛒 Einkäufe</span>
+                <span class="hidden sm:inline">🛒 Gemeinsame Einkaufsliste</span>
+            </h1>
+            
+            <div class="flex items-center space-x-1 sm:space-x-2 shrink-0">
+                <a href="index.html" class="p-2 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 font-semibold text-xs transition flex items-center gap-1" title="Zurück zum Haushaltsbuch">
+                    <span>📊</span>
+                    <span class="hidden md:inline">Haushaltsbuch</span>
+                </a>
+                
+                <button id="theme-btn" class="p-2 rounded-lg bg-gray-500/10 hover:bg-gray-500/20 text-xs sm:text-sm transition" title="Design wechseln">☀️</button>
+                
+                <button id="logout-btn" class="p-2 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 font-medium text-xs transition flex items-center gap-1" title="Abmelden">
+                    <span>🚪</span>
+                    <span class="hidden md:inline">Abmelden</span>
+                </button>
+            </div>
         </div>
     </header>
 
-    <main class="max-w-xl mx-auto px-4 mt-6">
+    <main class="max-w-4xl mx-auto px-4 mt-6">
         
-        <div id="loading-status" class="text-center p-6 text-xs text-muted">
-            Prüfe Anmeldung...
+        <div id="auth-container" class="max-w-md mx-auto app-card rounded-2xl p-6 border border-custom shadow-xl mt-12 hidden">
+            <h2 class="text-xl font-bold text-center mb-6">🔑 Bitte melde dich an</h2>
+            <p class="text-sm text-muted text-center mb-4">Du musst im Haushaltsbuch eingeloggt sein, um die Einkaufsliste zu sehen.</p>
+            <a href="index.html" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold p-2.5 rounded-xl text-sm transition block text-center shadow-md">Zur Login-Seite</a>
         </div>
 
-        <div id="shopping-app" class="space-y-4 hidden">
+        <div id="main-app-container" class="space-y-6">
             
-            <div class="app-card rounded-2xl p-4 border border-custom shadow-sm">
-                <h4 class="text-xs font-bold uppercase tracking-wider text-muted mb-3">➕ Artikel hinzufügen</h4>
-                <div class="flex gap-2">
-                    <input type="text" id="item-name" placeholder="z.B. Milch, Brot..." class="flex-1 p-2.5 rounded-xl border border-custom bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-amber-500">
-                    <input type="text" id="item-qty" placeholder="Menge (z.B. 2er)" class="w-24 p-2.5 rounded-xl border border-custom bg-transparent text-sm text-center focus:outline-none focus:ring-1 focus:ring-amber-500">
-                    <button id="add-item-btn" class="bg-amber-500 hover:bg-amber-600 text-white font-semibold px-4 rounded-xl text-sm transition shadow-md shadow-amber-500/10">Hinzufügen</button>
+            <div class="app-card rounded-2xl p-5 border border-custom shadow-sm">
+                <h4 class="text-sm font-bold uppercase tracking-wider mb-4 border-b border-custom pb-2">➕ Artikel hinzufügen</h4>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <input type="text" id="item-name" placeholder="Was wird gebraucht? (z.B. Milch)" class="flex-1 p-2.5 rounded-xl border border-custom bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    <button id="add-item-btn" class="bg-amber-500 hover:bg-amber-600 text-white font-semibold p-2.5 rounded-xl text-sm transition shadow-md shadow-amber-500/10 whitespace-nowrap">Hinzufügen</button>
                 </div>
             </div>
 
-            <div class="app-card rounded-2xl p-4 border border-custom shadow-sm">
-                <div class="flex justify-between items-center border-b border-custom pb-2 mb-3">
-                    <h4 class="text-xs font-bold uppercase tracking-wider text-muted">📋 Aktueller Einkaufswagen</h4>
-                    <button id="clear-checked-btn" class="text-[11px] text-rose-500 hover:underline font-medium">Erledigte löschen</button>
+            <div class="app-card rounded-2xl p-5 border border-custom shadow-sm">
+                <h4 class="text-sm font-bold uppercase tracking-wider mb-4 border-b border-custom pb-2">📋 Offene Einkäufe</h4>
+                <div id="shopping-list" class="space-y-2.5">
+                    <p class="text-muted text-center py-4 text-sm font-light">Lade Einkaufsliste...</p>
                 </div>
-                
-                <div id="shopping-list" class="space-y-2">
-                    </div>
             </div>
 
         </div>
@@ -72,7 +89,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 
     <script>
-        // Identische Firebase Konfiguration wie im Haushaltsbuch
+        // Firebase Konfiguration (Muss exakt mit der index.html übereinstimmen)
         const firebaseConfig = {
             apiKey: "AIzaSyC3GG3kGs4ofwg6qsjWcZC3nkn0SrjVJ3A",
             authDomain: "haushaltsbuch-4ea86.firebaseapp.com",
@@ -91,26 +108,24 @@
         let activeAccountId = null;
         let unsubscribeRealtime = null;
         let shoppingItems = [];
+        let currentTheme = localStorage.getItem('theme') || 'light';
 
-        // Theme aus LocalStorage laden (damit es synchron zur Hauptseite ist)
-        const currentTheme = localStorage.getItem('theme') || 'light';
-        document.getElementById('app-body').className = "font-sans min-h-screen pb-10 " + (currentTheme === 'dark' ? 'dark-mode' : 'light-mode');
-
-        // Status-Überwachung (Nutzt den Login aus der index.html)
+        // Auth Status überwachen
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 currentUser = user;
+                document.getElementById('auth-container').classList.add('hidden');
+                document.getElementById('main-app-container').classList.remove('hidden');
                 await determineActiveAccount(user.uid);
-                document.getElementById('loading-status').classList.add('hidden');
-                document.getElementById('shopping-app').classList.remove('hidden');
                 startRealtimeListener();
             } else {
-                // Wenn nicht eingeloggt, zurück zur Login-Seite
-                window.location.href = "index.html";
+                currentUser = null; activeAccountId = null;
+                if (unsubscribeRealtime) unsubscribeRealtime();
+                document.getElementById('main-app-container').classList.add('hidden');
+                document.getElementById('auth-container').classList.remove('hidden');
             }
         });
 
-        // Partner-ID-Logik spiegeln
         async function determineActiveAccount(uid) {
             const userSnap = await db.collection("users").doc(uid).get();
             if (userSnap.exists && userSnap.data().partnerId) {
@@ -120,13 +135,13 @@
             }
         }
 
-        // Live-Updates für die Einkaufsliste aus Firestore laden
         function startRealtimeListener() {
             if (unsubscribeRealtime) unsubscribeRealtime();
+            // Nutzt dasselbe Dokument in Firestore wie das Haushaltsbuch
             unsubscribeRealtime = db.collection("haushaltsbuecher").doc(activeAccountId).onSnapshot((docSnap) => {
                 const data = docSnap.exists ? docSnap.data() : {};
                 shoppingItems = data.shoppingItems || [];
-                renderShoppingList();
+                updateUI();
             });
         }
 
@@ -139,80 +154,80 @@
             } catch (e) { console.error("Fehler beim Speichern: ", e); }
         }
 
-        // Artikel hinzufügen
         function addItem() {
-            const nameEl = document.getElementById('item-name');
-            const qtyEl = document.getElementById('item-qty');
-            
-            if (!nameEl.value.trim()) return alert("Bitte einen Artikelnamen eingeben!");
+            const input = document.getElementById('item-name');
+            const name = input.value.trim();
+            if (!name) return;
 
             shoppingItems.push({
                 id: Date.now().toString(),
-                name: nameEl.value.trim(),
-                qty: qtyEl.value.trim() || "1",
-                checked: false
+                name: name,
+                createdAt: new Date().toISOString()
             });
 
-            nameEl.value = '';
-            qtyEl.value = '';
-            renderShoppingList();
+            input.value = '';
+            updateUI();
             saveCloudData();
         }
 
-        // Artikel abhaken/entweder abhaken
-        function toggleItem(id) {
-            shoppingItems = shoppingItems.map(item => {
-                if (item.id === id) item.checked = !item.checked;
-                return item;
-            });
-            renderShoppingList();
+        function deleteItem(id) {
+            shoppingItems = shoppingItems.filter(item => item.id !== id);
+            updateUI();
             saveCloudData();
         }
 
-        // Erledigte Artikel aus der Liste löschen
-        function clearCheckedItems() {
-            shoppingItems = shoppingItems.filter(item => !item.checked);
-            renderShoppingList();
-            saveCloudData();
-        }
-
-        // Benutzeroberfläche zeichnen
-        function renderShoppingList() {
-            const container = document.getElementById('shopping-list');
-            container.innerHTML = '';
+        function updateUI() {
+            const list = document.getElementById('shopping-list');
+            if (!list) return;
+            list.innerHTML = '';
 
             if (shoppingItems.length === 0) {
-                container.innerHTML = '<p class="text-muted text-center py-4 text-xs font-light">Der Einkaufswagen ist leer.</p>';
+                list.innerHTML = '<p class="text-muted text-center py-4 text-sm font-light">Der Kühlschrank ist voll! Keine offenen Artikel.</p>';
                 return;
             }
 
-            // Unerledigte Artikel nach oben sortieren
-            const sortedItems = [...shoppingItems].sort((a, b) => a.checked - b.checked);
+            // Sortiert nach Erstellungsdatum (neueste oben)
+            shoppingItems.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
-            sortedItems.forEach(item => {
+            shoppingItems.forEach(item => {
                 const div = document.createElement('div');
-                div.className = `flex justify-between items-center p-3 rounded-xl border border-custom bg-gray-500/5 transition-all cursor-pointer ${item.checked ? 'opacity-50' : ''}`;
-                div.onclick = () => toggleItem(item.id);
-
-                const textClass = item.checked ? 'line-through text-muted' : 'font-medium';
-
+                div.className = 'flex justify-between items-center p-3 rounded-xl border border-custom bg-gray-500/5 border-l-4 border-amber-500';
                 div.innerHTML = `
-                    <div class="flex items-center space-x-3">
-                        <input type="checkbox" ${item.checked ? 'checked' : ''} class="w-4 h-4 text-amber-500 rounded border-gray-300 focus:ring-amber-500 pointer-events-none">
-                        <span class="text-sm ${textClass}">${item.name}</span>
+                    <div>
+                        <p class="font-medium text-sm">${item.name}</p>
                     </div>
-                    <span class="text-xs px-2.5 py-1 rounded-lg bg-gray-500/10 font-bold text-muted">${item.qty}</span>
+                    <div>
+                        <button onclick="deleteItem('${item.id}')" class="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 text-xs px-3 py-1.5 rounded-lg font-semibold transition">
+                            ✓ Erledigt
+                        </button>
+                    </div>
                 `;
-                container.appendChild(div);
+                list.appendChild(div);
             });
         }
 
-        // Event-Listener aktivieren
+        // Theme Funktionen
+        function applyTheme() {
+            const body = document.getElementById('app-body'), btn = document.getElementById('theme-btn');
+            body.className = "font-sans min-h-screen pb-10 " + (currentTheme === 'dark' ? 'dark-mode' : 'light-mode');
+            btn.innerText = currentTheme === 'dark' ? "🌙" : "☀️";
+            localStorage.setItem('theme', currentTheme);
+        }
+
+        document.getElementById('theme-btn').addEventListener('click', () => { 
+            currentTheme = currentTheme === 'light' ? 'dark' : 'light'; 
+            applyTheme(); 
+        });
+
+        // Event Listener
         document.getElementById('add-item-btn').addEventListener('click', addItem);
-        document.getElementById('clear-checked-btn').addEventListener('click', clearCheckedItems);
-        // Hinzufügen per "Enter"-Taste erlauben
-        document.getElementById('item-name').addEventListener('keypress', (e) => { if(e.key === 'Enter') addItem(); });
-        document.getElementById('item-qty').addEventListener('keypress', (e) => { if(e.key === 'Enter') addItem(); });
+        document.getElementById('item-name').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addItem();
+        });
+        document.getElementById('logout-btn').addEventListener('click', () => auth.signOut());
+
+        // Initialisierung
+        applyTheme();
     </script>
 </body>
 </html>
