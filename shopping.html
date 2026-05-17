@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemeinsame Einkaufsliste</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        .light-mode {
+            --bg-main: #f3f4f6;
+            --bg-card: #ffffff;
+            --text-title: #1f2937;
+            --text-muted: #6b7280;
+            --border-color: #e5e7eb;
+        }
+        .dark-mode {
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --text-title: #f3f4f6;
+            --text-muted: #9ca3af;
+            --border-color: #334155;
+        }
+        body { background-color: var(--bg-main); color: var(--text-title); transition: all 0.3s ease; }
+        .app-card { background-color: var(--bg-card); border-color: var(--border-color); }
+        .text-title { color: var(--text-title); }
+        .text-muted { color: var(--text-muted); }
+        .border-custom { border-color: var(--border-color); }
+    </style>
+</head>
+<body id="app-body" class="font-sans min-h-screen pb-10 light-mode">
+
+    <header class="app-card border-b border-custom shadow-sm sticky top-0 z-40">
+        <div class="max-w-xl mx-auto px-4 py-3 flex justify-between items-center">
+            <h1 class="text-xl font-bold tracking-tight">🛒 Einkaufsliste</h1>
+            <a href="index.html" class="p-2 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 font-semibold text-xs transition">📊 Zum Haushaltsbuch</a>
+        </div>
+    </header>
+
+    <main class="max-w-xl mx-auto px-4 mt-6">
+        
+        <div id="loading-status" class="text-center p-6 text-xs text-muted">
+            Prüfe Anmeldung...
+        </div>
+
+        <div id="shopping-app" class="space-y-4 hidden">
+            
+            <div class="app-card rounded-2xl p-4 border border-custom shadow-sm">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-muted mb-3">➕ Artikel hinzufügen</h4>
+                <div class="flex gap-2">
+                    <input type="text" id="item-name" placeholder="z.B. Milch, Brot..." class="flex-1 p-2.5 rounded-xl border border-custom bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-amber-500">
+                    <input type="text" id="item-qty" placeholder="Menge (z.B. 2er)" class="w-24 p-2.5 rounded-xl border border-custom bg-transparent text-sm text-center focus:outline-none focus:ring-1 focus:ring-amber-500">
+                    <button id="add-item-btn" class="bg-amber-500 hover:bg-amber-600 text-white font-semibold px-4 rounded-xl text-sm transition shadow-md shadow-amber-500/10">Hinzufügen</button>
+                </div>
+            </div>
+
+            <div class="app-card rounded-2xl p-4 border border-custom shadow-sm">
+                <div class="flex justify-between items-center border-b border-custom pb-2 mb-3">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-muted">📋 Aktueller Einkaufswagen</h4>
+                    <button id="clear-checked-btn" class="text-[11px] text-rose-500 hover:underline font-medium">Erledigte löschen</button>
+                </div>
+                
+                <div id="shopping-list" class="space-y-2">
+                    </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
+    <script>
+        // Identische Firebase Konfiguration wie im Haushaltsbuch
+        const firebaseConfig = {
+            apiKey: "AIzaSyC3GG3kGs4ofwg6qsjWcZC3nkn0SrjVJ3A",
+            authDomain: "haushaltsbuch-4ea86.firebaseapp.com",
+            projectId: "haushaltsbuch-4ea86",
+            storageBucket: "haushaltsbuch-4ea86.firebasestorage.app",
+            messagingSenderId: "639032934816",
+            appId: "1:639032934816:web:a1d42ee5c46982966324c5",
+            measurementId: "G-BSM6HL36QQ"
+        };
+
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore(app);
+        const auth = firebase.auth();
+
+        let currentUser = null;
+        let activeAccountId = null;
+        let unsubscribeRealtime = null;
+        let shoppingItems = [];
+
+        // Theme aus LocalStorage laden (damit es synchron zur Hauptseite ist)
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        document.getElementById('app-body').className = "font-sans min-h-screen pb-10 " + (currentTheme === 'dark' ? 'dark-mode' : 'light-mode');
+
+        // Status-Überwachung (Nutzt den Login aus der index.html)
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                currentUser = user;
+                await determineActiveAccount(user.uid);
+                document.getElementById('loading-status').classList.add('hidden');
+                document.getElementById('shopping-app').classList.remove('hidden');
+                startRealtimeListener();
+            } else {
+                // Wenn nicht eingeloggt, zurück zur Login-Seite
+                window.location.href = "index.html";
+            }
+        });
+
+        // Partner-ID-Logik spiegeln
+        async function determineActiveAccount(uid) {
+            const userSnap = await db.collection("users").doc(uid).get();
+            if (userSnap.exists && userSnap.data().partnerId) {
+                activeAccountId = userSnap.data().partnerId;
+            } else {
+                activeAccountId = uid;
+            }
+        }
+
+        // Live-Updates für die Einkaufsliste aus Firestore laden
+        function startRealtimeListener() {
+            if (unsubscribeRealtime) unsubscribeRealtime();
+            unsubscribeRealtime = db.collection("haushaltsbuecher").doc(activeAccountId).onSnapshot((docSnap) => {
+                const data = docSnap.exists ? docSnap.data() : {};
+                shoppingItems = data.shoppingItems || [];
+                renderShoppingList();
+            });
+        }
+
+        async function saveCloudData() {
+            if (!activeAccountId) return;
+            try {
+                await db.collection("haushaltsbuecher").doc(activeAccountId).set({
+                    shoppingItems
+                }, { merge: true });
+            } catch (e) { console.error("Fehler beim Speichern: ", e); }
+        }
+
+        // Artikel hinzufügen
+        function addItem() {
+            const nameEl = document.getElementById('item-name');
+            const qtyEl = document.getElementById('item-qty');
+            
+            if (!nameEl.value.trim()) return alert("Bitte einen Artikelnamen eingeben!");
+
+            shoppingItems.push({
+                id: Date.now().toString(),
+                name: nameEl.value.trim(),
+                qty: qtyEl.value.trim() || "1",
+                checked: false
+            });
+
+            nameEl.value = '';
+            qtyEl.value = '';
+            renderShoppingList();
+            saveCloudData();
+        }
+
+        // Artikel abhaken/entweder abhaken
+        function toggleItem(id) {
+            shoppingItems = shoppingItems.map(item => {
+                if (item.id === id) item.checked = !item.checked;
+                return item;
+            });
+            renderShoppingList();
+            saveCloudData();
+        }
+
+        // Erledigte Artikel aus der Liste löschen
+        function clearCheckedItems() {
+            shoppingItems = shoppingItems.filter(item => !item.checked);
+            renderShoppingList();
+            saveCloudData();
+        }
+
+        // Benutzeroberfläche zeichnen
+        function renderShoppingList() {
+            const container = document.getElementById('shopping-list');
+            container.innerHTML = '';
+
+            if (shoppingItems.length === 0) {
+                container.innerHTML = '<p class="text-muted text-center py-4 text-xs font-light">Der Einkaufswagen ist leer.</p>';
+                return;
+            }
+
+            // Unerledigte Artikel nach oben sortieren
+            const sortedItems = [...shoppingItems].sort((a, b) => a.checked - b.checked);
+
+            sortedItems.forEach(item => {
+                const div = document.createElement('div');
+                div.className = `flex justify-between items-center p-3 rounded-xl border border-custom bg-gray-500/5 transition-all cursor-pointer ${item.checked ? 'opacity-50' : ''}`;
+                div.onclick = () => toggleItem(item.id);
+
+                const textClass = item.checked ? 'line-through text-muted' : 'font-medium';
+
+                div.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <input type="checkbox" ${item.checked ? 'checked' : ''} class="w-4 h-4 text-amber-500 rounded border-gray-300 focus:ring-amber-500 pointer-events-none">
+                        <span class="text-sm ${textClass}">${item.name}</span>
+                    </div>
+                    <span class="text-xs px-2.5 py-1 rounded-lg bg-gray-500/10 font-bold text-muted">${item.qty}</span>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // Event-Listener aktivieren
+        document.getElementById('add-item-btn').addEventListener('click', addItem);
+        document.getElementById('clear-checked-btn').addEventListener('click', clearCheckedItems);
+        // Hinzufügen per "Enter"-Taste erlauben
+        document.getElementById('item-name').addEventListener('keypress', (e) => { if(e.key === 'Enter') addItem(); });
+        document.getElementById('item-qty').addEventListener('keypress', (e) => { if(e.key === 'Enter') addItem(); });
+    </script>
+</body>
+</html>
