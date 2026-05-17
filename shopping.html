@@ -3,52 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Einkaufsliste - Haushaltsbuch</title>
+    <title>Unser Einkaufshelfer</title>
     
     <link class="apple-touch-icon" href="app-icon.png?v=1">
     <link class="icon" type="image/png" href="app-icon.png?v=1">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        
+        :root {
+            --font-sans: 'Plus Jakarta Sans', sans-serif;
+        }
+
         .light-mode {
-            --bg-main: #f3f4f6;
+            --bg-main: #f8fafc;
             --bg-card: #ffffff;
-            --text-title: #1f2937;
-            --text-muted: #6b7280;
-            --border-color: #e5e7eb;
+            --text-title: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
         }
         .dark-mode {
-            --bg-main: #0f172a;
-            --bg-card: #1e293b;
-            --text-title: #f3f4f6;
-            --text-muted: #9ca3af;
-            --border-color: #334155;
+            --bg-main: #090d16;
+            --bg-card: #131c2e;
+            --text-title: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #22314d;
         }
-        body { background-color: var(--bg-main); color: var(--text-title); transition: all 0.3s ease; overflow-x: hidden; }
-        .app-card { background-color: var(--bg-card); border-color: var(--border-color); }
+        
+        body { 
+            font-family: var(--font-sans);
+            background-color: var(--bg-main); 
+            color: var(--text-title); 
+            transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+            overflow-x: hidden; 
+        }
+        .app-card { 
+            background-color: var(--bg-card); 
+            border-color: var(--border-color); 
+            backdrop-filter: blur(8px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
         .text-title { color: var(--text-title); }
         .text-muted { color: var(--text-muted); }
         .border-custom { border-color: var(--border-color); }
+
+        .fade-in-ready {
+            animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
-<body id="app-body" class="font-sans min-h-screen pb-10 light-mode">
+<body id="app-body" class="min-h-screen pb-12 light-mode">
 
-    <header class="app-card border-b border-custom shadow-sm sticky top-0 z-40 w-full overflow-x-hidden">
-        <div class="max-w-4xl mx-auto px-2 sm:px-3 py-2 flex justify-between items-center gap-1 sm:gap-2">
-            <h1 class="text-sm sm:text-lg font-bold tracking-tight truncate max-w-[110px] xs:max-w-[140px] sm:max-w-none">
-                <span class="sm:hidden">🛒 Einkäufe</span>
-                <span class="hidden sm:inline">🛒 Gemeinsame Einkaufsliste</span>
+    <header class="app-card border-b border-custom shadow-sm sticky top-0 z-40 w-full overflow-x-hidden bg-opacity-80 backdrop-blur-md">
+        <div class="max-w-4xl mx-auto px-3 sm:px-4 py-3 flex justify-between items-center gap-2">
+            <h1 class="text-sm sm:text-lg font-extrabold tracking-tight truncate max-w-[120px] xs:max-w-[150px] sm:max-w-none bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
+                <span>🛒 Einkaufshelfer</span>
             </h1>
             
-            <div class="flex items-center space-x-1 sm:space-x-2 shrink-0">
-                <a href="index.html" class="p-2 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 font-semibold text-xs transition flex items-center gap-1" title="Zurück zum Haushaltsbuch">
+            <div class="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
+                <a href="index.html" class="p-2.5 rounded-xl bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white font-semibold text-xs transition-all duration-200 flex items-center gap-1.5 active:scale-95" title="Zum Haushaltsbuch">
                     <span>📊</span>
                     <span class="hidden sm:inline">Haushaltsbuch</span>
                 </a>
                 
-                <button id="theme-btn" class="p-2 rounded-lg bg-gray-500/10 hover:bg-gray-500/20 text-xs sm:text-sm transition h-[32px] w-[32px] flex items-center justify-center" title="Design wechseln">☀️</button>
+                <button id="theme-btn" class="p-2.5 rounded-xl bg-gray-500/10 hover:bg-gray-500/20 text-xs sm:text-sm transition-all duration-200 h-[36px] w-[36px] flex items-center justify-center active:scale-95" title="Design wechseln">☀️</button>
                 
-                <button id="logout-btn" class="p-2 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 font-medium text-xs transition flex items-center gap-1" title="Abmelden">
+                <button id="logout-btn" class="p-2.5 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white font-semibold text-xs transition-all duration-200 flex items-center gap-1.5 active:scale-95" title="Abmelden">
                     <span>🚪</span>
                     <span class="hidden sm:inline">Abmelden</span>
                 </button>
@@ -56,28 +81,41 @@
         </div>
     </header>
 
-    <main class="max-w-4xl mx-auto px-4 mt-6">
-        
-        <div id="auth-container" class="max-w-md mx-auto app-card rounded-2xl p-6 border border-custom shadow-xl mt-12 hidden">
-            <h2 class="text-xl font-bold text-center mb-6">🔑 Bitte melde dich an</h2>
-            <p class="text-sm text-muted text-center mb-4">Du musst im Haushaltsbuch eingeloggt sein, um die Einkaufsliste zu sehen.</p>
-            <a href="index.html" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold p-2.5 rounded-xl text-sm transition block text-center shadow-md">Zur Login-Seite</a>
+    <main class="max-w-4xl mx-auto px-4 mt-8">
+
+        <div id="auth-container" class="max-w-md mx-auto app-card rounded-3xl p-6 sm:p-8 border border-custom shadow-xl mt-12 hidden">
+            <h2 id="auth-title" class="text-2xl font-extrabold text-center mb-6 tracking-tight">🔑 Anmelden</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider mb-1.5 text-muted">E-Mail-Adresse</label>
+                    <input type="email" id="auth-email" placeholder="deine@email.de" class="w-full p-3 rounded-xl border border-custom bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider mb-1.5 text-muted">Passwort</label>
+                    <input type="password" id="auth-password" placeholder="••••••••" class="w-full p-3 rounded-xl border border-custom bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+                </div>
+                <button id="auth-submit-btn" class="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold p-3 rounded-xl text-sm transition-all duration-200 mt-2 shadow-lg shadow-amber-500/20 active:scale-[0.98]">Einloggen</button>
+                <button id="auth-toggle-btn" class="w-full text-xs text-amber-600 hover:text-amber-700 font-medium mt-3 text-center block transition-colors">Noch kein Konto? Jetzt registrieren</button>
+            </div>
         </div>
 
-        <div id="main-app-container" class="space-y-6">
-            
-            <div class="app-card rounded-2xl p-5 border border-custom shadow-sm">
-                <h4 class="text-sm font-bold uppercase tracking-wider mb-4 border-b border-custom pb-2">➕ Artikel hinzufügen</h4>
+        <div id="main-app-container" class="space-y-6 hidden fade-in-ready">
+
+            <div class="app-card rounded-3xl p-6 border border-custom shadow-sm">
+                <h4 class="text-xs font-bold uppercase tracking-wider mb-4 border-b border-custom pb-2.5 text-muted">➕ Artikel hinzufügen</h4>
                 <div class="flex flex-col sm:flex-row gap-3">
-                    <input type="text" id="item-name" placeholder="Was wird gebraucht? (z.B. Milch)" class="flex-1 p-2.5 rounded-xl border border-custom bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
-                    <button id="add-item-btn" class="bg-amber-500 hover:bg-amber-600 text-white font-semibold p-2.5 rounded-xl text-sm transition shadow-md shadow-amber-500/10 whitespace-nowrap">Hinzufügen</button>
+                    <input type="text" id="item-input" placeholder="Zutaten, Milch, Brot..." class="flex-1 p-3 rounded-xl border border-custom bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all">
+                    <button id="add-item-btn" class="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold px-6 py-3 rounded-xl text-sm transition-all shadow-md shadow-amber-500/10 active:scale-[0.98]">Hinzufügen</button>
                 </div>
             </div>
 
-            <div class="app-card rounded-2xl p-5 border border-custom shadow-sm">
-                <h4 class="text-sm font-bold uppercase tracking-wider mb-4 border-b border-custom pb-2">📋 Offene Einkäufe</h4>
-                <div id="shopping-list" class="space-y-2.5">
-                    <p class="text-muted text-center py-4 text-sm font-light">Lade Einkaufsliste...</p>
+            <div class="app-card rounded-3xl p-6 border border-custom shadow-sm">
+                <div class="flex justify-between items-center border-b border-custom pb-3 text-muted">
+                    <h4 class="text-xs font-bold uppercase tracking-wider📋">📋 Aktuelle Einkaufsliste</h4>
+                    <button id="clear-list-btn" class="text-xs font-bold text-rose-500 hover:text-rose-600 transition-colors px-2 py-1 rounded-lg hover:bg-rose-500/5 active:scale-95">Alle löschen</button>
+                </div>
+                <div id="shopping-list-container" class="mt-4">
+                    <div id="shopping-list" class="space-y-2.5"></div>
                 </div>
             </div>
 
@@ -89,7 +127,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 
     <script>
-        // Firebase Konfiguration (Muss exakt mit der index.html übereinstimmen)
         const firebaseConfig = {
             apiKey: "AIzaSyC3GG3kGs4ofwg6qsjWcZC3nkn0SrjVJ3A",
             authDomain: "haushaltsbuch-4ea86.firebaseapp.com",
@@ -109,8 +146,8 @@
         let unsubscribeRealtime = null;
         let shoppingItems = [];
         let currentTheme = localStorage.getItem('theme') || 'light';
+        let isLoginMode = true;
 
-        // Auth Status von Firebase überwachen
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 currentUser = user;
@@ -137,9 +174,9 @@
 
         function startRealtimeListener() {
             if (unsubscribeRealtime) unsubscribeRealtime();
-            unsubscribeRealtime = db.collection("haushaltsbuecher").doc(activeAccountId).onSnapshot((docSnap) => {
+            unsubscribeRealtime = db.collection("einkaufslisten").doc(activeAccountId).onSnapshot((docSnap) => {
                 const data = docSnap.exists ? docSnap.data() : {};
-                shoppingItems = data.shoppingItems || [];
+                shoppingItems = data.items || [];
                 updateUI();
             });
         }
@@ -147,85 +184,112 @@
         async function saveCloudData() {
             if (!activeAccountId) return;
             try {
-                await db.collection("haushaltsbuecher").doc(activeAccountId).set({
-                    shoppingItems
-                }, { merge: true });
+                await db.collection("einkaufslisten").doc(activeAccountId).set({ items: shoppingItems }, { merge: true });
             } catch (e) { console.error("Fehler beim Speichern: ", e); }
         }
 
-        function addItem() {
-            const input = document.getElementById('item-name');
-            const name = input.value.trim();
-            if (!name) return;
-
-            shoppingItems.push({
-                id: Date.now().toString(),
-                name: name,
-                createdAt: new Date().toISOString()
-            });
-
-            input.value = '';
-            updateUI();
-            saveCloudData();
+        async function handleAuth() {
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value;
+            if (!email || !password) return alert("Felder ausfüllen!");
+            try {
+                if (isLoginMode) { await auth.signInWithEmailAndPassword(email, password); }
+                else { await auth.createUserWithEmailAndPassword(email, password); alert("Konto erstellt!"); }
+            } catch (e) { alert("Fehler: " + e.message); }
         }
 
-        function deleteItem(id) {
-            shoppingItems = shoppingItems.filter(item => item.id !== id);
-            updateUI();
-            saveCloudData();
+        function toggleAuthMode() {
+            isLoginMode = !isLoginMode;
+            document.getElementById('auth-title').innerText = isLoginMode ? "🔑 Anmelden" : "📝 Registrieren";
+            document.getElementById('auth-submit-btn').innerText = isLoginMode ? "Einloggen" : "Konto erstellen";
+            document.getElementById('auth-toggle-btn').innerText = isLoginMode ? "Noch kein Konto? Registrieren" : "Hier einloggen";
         }
+
+        function applyTheme() {
+            const body = document.getElementById('app-body'), btn = document.getElementById('theme-btn');
+            body.className = "min-h-screen pb-12 " + (currentTheme === 'dark' ? 'dark-mode' : 'light-mode');
+            btn.innerText = currentTheme === 'dark' ? "🌙" : "☀️";
+            localStorage.setItem('theme', currentTheme);
+        }
+
+        document.getElementById('theme-btn').addEventListener('click', () => { currentTheme = currentTheme === 'light' ? 'dark' : 'light'; applyTheme(); });
 
         function updateUI() {
             const list = document.getElementById('shopping-list');
-            if (!list) return;
             list.innerHTML = '';
 
             if (shoppingItems.length === 0) {
-                list.innerHTML = '<p class="text-muted text-center py-4 text-sm font-light">Der Kühlschrank ist voll! Keine offenen Artikel.</p>';
+                list.innerHTML = '<p class="text-muted text-center py-5 text-sm font-light opacity-60">Der Einkaufskorb ist leer.</p>';
                 return;
             }
 
-            // Sortierung: Neueste Einträge oben
-            shoppingItems.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+            // Erst nicht gekaufte, dann gekaufte Artikel sortieren
+            const sortedItems = [...shoppingItems].sort((a, b) => a.checked - b.checked);
 
-            shoppingItems.forEach(item => {
+            sortedItems.forEach((item) => {
+                const globalIndex = shoppingItems.indexOf(item);
                 const div = document.createElement('div');
-                div.className = 'flex justify-between items-center p-3 rounded-xl border border-custom bg-gray-500/5 border-l-4 border-amber-500';
+                
+                const bgStyle = item.checked 
+                    ? "bg-gray-500/[0.01] opacity-50 line-through border-custom" 
+                    : "border-custom bg-gradient-to-r from-amber-500/[0.01] to-transparent hover:translate-x-0.5";
+
+                div.className = `flex justify-between items-center p-3.5 rounded-2xl border ${bgStyle} transition-all duration-200`;
+                
                 div.innerHTML = `
-                    <div>
-                        <p class="font-medium text-sm">${item.name}</p>
+                    <div class="flex items-center space-x-3 flex-1 cursor-pointer" onclick="toggleCheckItem(${globalIndex})">
+                        <input type="checkbox" ${item.checked ? 'checked' : ''} class="w-4 h-4 rounded text-amber-500 focus:ring-amber-500/20 border-custom cursor-pointer transition-all">
+                        <span class="font-semibold text-sm text-title">${item.name}</span>
                     </div>
-                    <div>
-                        <button onclick="deleteItem('${item.id}')" class="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 text-xs px-3 py-1.5 rounded-lg font-semibold transition">
-                            ✓ Erledigt
-                        </button>
-                    </div>
+                    <button onclick="deleteItem(${globalIndex})" class="ml-3.5 text-gray-400 hover:text-rose-500 text-xl font-light leading-none transition-colors">&times;</button>
                 `;
                 list.appendChild(div);
             });
         }
 
-        // Design umschalten (Light / Dark Mode)
-        function applyTheme() {
-            const body = document.getElementById('app-body'), btn = document.getElementById('theme-btn');
-            body.className = "font-sans min-h-screen pb-10 " + (currentTheme === 'dark' ? 'dark-mode' : 'light-mode');
-            btn.innerText = currentTheme === 'dark' ? "🌙" : "☀️";
-            localStorage.setItem('theme', currentTheme);
+        function addItem() {
+            const input = document.getElementById('item-input');
+            const name = input.value.trim();
+            if (!name) return;
+            
+            shoppingItems.push({ name: name, checked: false });
+            input.value = '';
+            updateUI();
+            saveCloudData();
         }
 
-        document.getElementById('theme-btn').addEventListener('click', () => { 
-            currentTheme = currentTheme === 'light' ? 'dark' : 'light'; 
-            applyTheme(); 
-        });
+        function toggleCheckItem(index) {
+            shoppingItems[index].checked = !shoppingItems[index].checked;
+            updateUI();
+            saveCloudData();
+        }
 
-        // Event Listener für Buttons und Eingaben
+        function deleteItem(index) {
+            shoppingItems.splice(index, 1);
+            updateUI();
+            saveCloudData();
+        }
+
+        function clearAllItems() {
+            if (shoppingItems.length === 0) return;
+            if (confirm("Möchtest du wirklich die gesamte Einkaufsliste leeren?")) {
+                shoppingItems = [];
+                updateUI();
+                saveCloudData();
+            }
+        }
+
+        document.getElementById('logout-btn').addEventListener('click', () => auth.signOut());
+        document.getElementById('auth-submit-btn').addEventListener('click', handleAuth);
+        document.getElementById('auth-toggle-btn').addEventListener('click', toggleAuthMode);
         document.getElementById('add-item-btn').addEventListener('click', addItem);
-        document.getElementById('item-name').addEventListener('keypress', (e) => {
+        document.getElementById('clear-list-btn').addEventListener('click', clearAllItems);
+        
+        // Enter-Taste im Input-Feld abfangen
+        document.getElementById('item-input').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') addItem();
         });
-        document.getElementById('logout-btn').addEventListener('click', () => auth.signOut());
 
-        // App-Start initialisieren
         applyTheme();
     </script>
 </body>
