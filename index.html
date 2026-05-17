@@ -11,26 +11,44 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        /* Light Mode */
         .light-mode {
             --bg-main: #f3f4f6;
             --bg-card: #ffffff;
             --text-title: #1f2937;
             --text-muted: #6b7280;
             --border-color: #e5e7eb;
-            --select-bg: #ffffff;
-            --select-text: #1f2937;
+            --accent-color: #3b82f6;
         }
+        /* Dark Mode */
         .dark-mode {
             --bg-main: #0f172a;
             --bg-card: #1e293b;
             --text-title: #f3f4f6;
             --text-muted: #9ca3af;
             --border-color: #334155;
-            --select-bg: #1e293b;
-            --select-text: #f3f4f6;
+            --accent-color: #3b82f6;
         }
-        body { background-color: var(--bg-main); color: var(--text-title); transition: all 0.3s ease; overflow-x: hidden; }
-        .app-card { background-color: var(--bg-card); border-color: var(--border-color); }
+        /* Premium Mode (Edles Slate/Amethyst/Gold) */
+        .premium-mode {
+            --bg-main: #0b0f19;
+            --bg-card: #111827;
+            --text-title: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #1f2937;
+            --accent-color: #d97706; /* Edles Gold */
+        }
+
+        body { 
+            background-color: var(--bg-main); 
+            color: var(--text-title); 
+            transition: all 0.3s ease; 
+            overflow-x: hidden; 
+        }
+        .app-card { 
+            background-color: var(--bg-card); 
+            border-color: var(--border-color); 
+        }
         .text-title { color: var(--text-title); }
         .text-muted { color: var(--text-muted); }
         .border-custom { border-color: var(--border-color); }
@@ -42,6 +60,16 @@
         .custom-select option {
             background-color: var(--bg-card) !important;
             color: var(--text-title) !important;
+        }
+
+        /* Premium Spezial-Klassen für feine visuelle Effekte */
+        .premium-mode .premium-gradient-btn {
+            background: linear-gradient(135deg, #7c3aed 0%, #c084fc 100%);
+            color: white;
+        }
+        .premium-mode .premium-border-glow {
+            border-color: #7c3aed;
+            box-shadow: 0 0 12px rgba(124, 58, 237, 0.15);
         }
     </style>
 </head>
@@ -273,7 +301,6 @@
 
         const monthNames = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
 
-        // HIER WURDE DER FEHLER BEHOBEN: Zuverlässige Steuerung der Sichtbarkeiten
         auth.onAuthStateChanged(async (user) => {
             const authContainer = document.getElementById('auth-container');
             const mainAppContainer = document.getElementById('main-app-container');
@@ -451,14 +478,39 @@
             if(document.getElementById('event-time')) document.getElementById('event-time').value = currentTime;
         }
 
+        // HIER WIRD DAS PREMIUM DESIGN GESTEUERT (3-Wege-Umschalter)
         function applyTheme() {
             const body = document.getElementById('app-body'), btn = document.getElementById('theme-btn');
-            body.className = "font-sans min-h-screen pb-10 " + (currentTheme === 'dark' ? 'dark-mode' : 'light-mode');
-            btn.innerText = currentTheme === 'dark' ? "🌙" : "☀️";
+            
+            // Entfernt alle Themes, um Überschneidungen zu verhindern
+            body.classList.remove('light-mode', 'dark-mode', 'premium-mode');
+            
+            if (currentTheme === 'light') {
+                body.classList.add('light-mode');
+                btn.innerText = "☀️";
+            } else if (currentTheme === 'dark') {
+                body.classList.add('dark-mode');
+                btn.innerText = "🌙";
+            } else if (currentTheme === 'premium') {
+                body.classList.add('premium-mode');
+                btn.innerText = "✨"; // Edles Premium Icon
+            }
             localStorage.setItem('theme', currentTheme);
         }
 
-        document.getElementById('theme-btn').addEventListener('click', () => { currentTheme = currentTheme === 'light' ? 'dark' : 'light'; applyTheme(); updateUI(); });
+        document.getElementById('theme-btn').addEventListener('click', () => { 
+            // Schaltet zyklisch durch alle drei Designs
+            if (currentTheme === 'light') {
+                currentTheme = 'dark';
+            } else if (currentTheme === 'dark') {
+                currentTheme = 'premium';
+            } else {
+                currentTheme = 'light';
+            }
+            applyTheme(); 
+            updateUI(); 
+        });
+
         function openSettings() { document.getElementById('settings-modal').classList.remove('opacity-0', 'pointer-events-none'); renderRecurringList(); }
         function closeSettings() { document.getElementById('settings-modal').classList.add('opacity-0', 'pointer-events-none'); }
 
@@ -519,11 +571,22 @@
             const ctx = document.getElementById('financeChart').getContext('2d');
             if (financeChart) financeChart.destroy();
             
-            const isDark = currentTheme === 'dark';
+            const isDarkOrPremium = currentTheme === 'dark' || currentTheme === 'premium';
             const hasData = inc > 0 || exp > 0 || currentSavings > 0;
             const chartData = hasData ? [inc, exp, currentSavings] : [1, 0, 0];
             const chartLabels = hasData ? ['Einnahmen', 'Ausgaben', 'Gespartes'] : ['Keine Daten vorhanden', '', ''];
             
+            // Premium Chart Farben anpassen (Gold und Violett Akzente im Premium Design)
+            let incomeColor = '#10b981';
+            let expenseColor = '#f43f5e';
+            let savingsColor = '#6366f1';
+
+            if (currentTheme === 'premium') {
+                incomeColor = '#d97706'; // Premium Gold für Einnahmen
+                expenseColor = '#ef4444'; 
+                savingsColor = '#7c3aed'; // Premium Violett für Gespartes
+            }
+
             financeChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: { 
@@ -531,12 +594,12 @@
                     datasets: [{ 
                         data: chartData, 
                         backgroundColor: hasData ? [
-                            '#10b981', 
-                            '#f43f5e', 
-                            '#6366f1'  
-                        ] : [isDark ? '#334155' : '#e5e7eb'],
-                        borderWidth: isDark ? 3 : 2,
-                        borderColor: isDark ? '#1e293b' : '#ffffff',
+                            incomeColor, 
+                            expenseColor, 
+                            savingsColor
+                        ] : [isDarkOrPremium ? '#334155' : '#e5e7eb'],
+                        borderWidth: isDarkOrPremium ? 3 : 2,
+                        borderColor: currentTheme === 'premium' ? '#111827' : (currentTheme === 'dark' ? '#1e293b' : '#ffffff'),
                         hoverOffset: 6,
                         borderRadius: 4
                     }] 
@@ -550,7 +613,7 @@
                             display: true,
                             position: 'right',
                             labels: {
-                                color: isDark ? '#f3f4f6' : '#1f2937',
+                                color: isDarkOrPremium ? '#f3f4f6' : '#1f2937',
                                 font: { size: 12, weight: '500' },
                                 padding: 15,
                                 boxWidth: 12
@@ -610,7 +673,7 @@
             balanceEl.innerText = `${total.toFixed(2).replace('.', ',')} €`;
             
             if (total >= 0) {
-                balanceEl.className = "text-3xl font-bold mt-1 text-emerald-500";
+                balanceEl.className = "text-3xl font-bold mt-1 " + (currentTheme === 'premium' ? "text-amber-500" : "text-emerald-500");
             } else {
                 balanceEl.className = "text-3xl font-bold mt-1 text-rose-500";
             }
@@ -630,7 +693,14 @@
                 let pct = Math.min(100, Math.round((yearSav / goal) * 100));
                 if(document.getElementById('progress-text')) document.getElementById('progress-text').innerText = `Jahresziel ${year}: ${pct}%`;
                 if(document.getElementById('goal-status-text')) document.getElementById('goal-status-text').innerText = `${yearSav.toFixed(2)} / ${goal} €`;
-                if(document.getElementById('progress-bar')) document.getElementById('progress-bar').style.width = `${pct}%`;
+                if(document.getElementById('progress-bar')) {
+                    document.getElementById('progress-bar').style.width = `${pct}%`;
+                    if (currentTheme === 'premium') {
+                        document.getElementById('progress-bar').className = "bg-purple-600 h-2.5 rounded-full transition-all duration-500";
+                    } else {
+                        document.getElementById('progress-bar').className = "bg-blue-500 h-2.5 rounded-full transition-all duration-500";
+                    }
+                }
             } else {
                 if(formEl) formEl.classList.remove('hidden');
                 if(infoEl) infoEl.classList.add('hidden');
@@ -654,16 +724,16 @@
                     
                     let borderClass = "", textClass = "", prefix = "";
                     if (t.type === 'income') {
-                        borderClass = "border-l-4 border-emerald-500";
-                        textClass = "text-emerald-500";
+                        borderClass = currentTheme === 'premium' ? "border-l-4 border-amber-500" : "border-l-4 border-emerald-500";
+                        textClass = currentTheme === 'premium' ? "text-amber-500" : "text-emerald-500";
                         prefix = "+";
                     } else if (t.type === 'expense') {
                         borderClass = "border-l-4 border-rose-500";
                         textClass = "text-rose-500";
                         prefix = "-";
                     } else if (t.type === 'savings') {
-                        borderClass = "border-l-4 border-blue-500";
-                        textClass = "text-blue-500";
+                        borderClass = currentTheme === 'premium' ? "border-l-4 border-purple-500" : "border-l-4 border-blue-500";
+                        textClass = currentTheme === 'premium' ? "text-purple-400" : "text-blue-500";
                         prefix = "➔";
                     }
 
