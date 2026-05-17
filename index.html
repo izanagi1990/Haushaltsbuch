@@ -48,28 +48,28 @@
 <body id="app-body" class="font-sans min-h-screen pb-10 light-mode">
 
     <header class="app-card border-b border-custom shadow-sm sticky top-0 z-40 w-full overflow-x-hidden">
-        <div class="max-w-4xl mx-auto px-3 py-2 flex justify-between items-center gap-2">
-            <h1 class="text-base sm:text-xl font-bold tracking-tight truncate max-w-[140px] sm:max-w-none">
-                <span class="sm:hidden">📊 Haushaltsbuch</span>
+        <div class="max-w-4xl mx-auto px-2 sm:px-3 py-2 flex justify-between items-center gap-1 sm:gap-2">
+            <h1 class="text-sm sm:text-lg font-bold tracking-tight truncate max-w-[110px] xs:max-w-[140px] sm:max-w-none">
+                <span class="sm:hidden">📊 Setup</span>
                 <span class="hidden sm:inline">📊 Haushaltsbuch & Kalender</span>
             </h1>
             
             <div class="flex items-center space-x-1 sm:space-x-2 shrink-0">
                 <a href="shopping.html" class="p-2 rounded-lg bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 font-semibold text-xs transition flex items-center gap-1" title="Einkaufsliste">
                     <span>🛒</span>
-                    <span class="hidden md:inline">Einkaufsliste</span>
+                    <span class="hidden sm:inline">Einkaufsliste</span>
                 </a>
                 
-                <button id="toggle-partner-area-btn" class="hidden p-2 rounded-lg bg-gray-500/10 text-title hover:bg-gray-500/20 font-medium text-xs transition flex items-center gap-1" title="Partner verknüpfen">
+                <button id="toggle-partner-area-btn" class="hidden p-2 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 font-medium text-xs transition flex items-center gap-1" title="Partner verknüpfen">
                     <span>🔗</span>
-                    <span class="hidden md:inline">Partner</span>
+                    <span class="hidden sm:inline">Partner</span>
                 </button>
                 
-                <button id="theme-btn" class="p-2 rounded-lg bg-gray-500/10 hover:bg-gray-500/20 text-xs sm:text-sm transition" title="Design wechseln">☀️</button>
+                <button id="theme-btn" class="p-2 rounded-lg bg-gray-500/10 hover:bg-gray-500/20 text-xs sm:text-sm transition h-[32px] w-[32px] flex items-center justify-center" title="Design wechseln">☀️</button>
                 
                 <button id="logout-btn" class="p-2 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 font-medium text-xs transition flex items-center gap-1" title="Abmelden">
                     <span>🚪</span>
-                    <span class="hidden md:inline">Abmelden</span>
+                    <span class="hidden sm:inline">Abmelden</span>
                 </button>
             </div>
         </div>
@@ -513,7 +513,6 @@
             
             const isDark = currentTheme === 'dark';
             
-            // Wenn gar keine Daten existieren, füllen wir Dummy-Werte für ein schöneres UI
             const hasData = inc > 0 || exp > 0 || currentSavings > 0;
             const chartData = hasData ? [inc, exp, currentSavings] : [1, 0, 0];
             const chartLabels = hasData ? ['Einnahmen', 'Ausgaben', 'Gespartes'] : ['Keine Daten vorhanden', '', ''];
@@ -525,9 +524,9 @@
                     datasets: [{ 
                         data: chartData, 
                         backgroundColor: hasData ? [
-                            '#10b981', // Smaragd-Grün für Einnahmen
-                            '#f43f5e', // Rosé-Rot für Ausgaben
-                            '#6366f1'  // Indigo/Blau für Gespartes
+                            '#10b981', 
+                            '#f43f5e', 
+                            '#6366f1'  
                         ] : [isDark ? '#334155' : '#e5e7eb'],
                         borderWidth: isDark ? 3 : 2,
                         borderColor: isDark ? '#1e293b' : '#ffffff',
@@ -538,7 +537,7 @@
                 options: { 
                     responsive: true, 
                     maintainAspectRatio: false, 
-                    cutout: '70%', // Macht den Ring dünner und eleganter
+                    cutout: '70%', 
                     plugins: { 
                         legend: { 
                             display: true,
@@ -627,7 +626,7 @@
                 if(document.getElementById('progress-bar')) document.getElementById('progress-bar').style.width = `${pct}%`;
             } else {
                 if(formEl) formEl.classList.remove('hidden');
-                if(infoEl) infoEl.classList.add('hidden');
+                if(infoEl) id=infoEl.classList.add('hidden');
                 if(document.getElementById('savings-goal-input')) document.getElementById('savings-goal-input').value = goal > 0 ? goal : '';
                 
                 if (goal === 0) {
@@ -637,7 +636,6 @@
                 }
             }
 
-            // Rendert das modernisierte Doughnut-Diagramm mit dem aktuell gesparten monatlichen Wert
             renderChart(inc, exp, sav);
 
             const filtered = transactions.filter(t => t.monthStr === selMon);
