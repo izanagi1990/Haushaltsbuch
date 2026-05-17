@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Unser Haushaltsbuch & Familienkalender</title>
     
-<link rel="apple-touch-icon" href="app-icon.png?v=1">
-<link rel="icon" type="image/png" href="app-icon.png?v=1">
+    <link rel="apple-touch-icon" href="app-icon.png?v=1">
+    <link rel="icon" type="image/png" href="app-icon.png?v=1">
     
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -241,3 +241,30 @@
                 currentUser = user;
                 document.getElementById('auth-container').classList.add('hidden');
                 document.getElementById('main-app-container').classList.remove('hidden');
+                document.getElementById('toggle-partner-area-btn').classList.remove('hidden');
+                
+                await determineActiveAccount(user.uid);
+                startRealtimeListener();
+            } else {
+                currentUser = null;
+                activeAccountId = null;
+                if (unsubscribeRealtime) unsubscribeRealtime();
+                document.getElementById('main-app-container').classList.add('hidden');
+                document.getElementById('auth-container').classList.remove('hidden');
+                document.getElementById('toggle-partner-area-btn').classList.add('hidden');
+            }
+        });
+
+        async function determineActiveAccount(uid) {
+            document.getElementById('my-account-id').innerText = uid;
+            const userRef = db.collection("users").doc(uid);
+            const userSnap = await userRef.get();
+            
+            if (userSnap.exists && userSnap.data().partnerId) {
+                activeAccountId = userSnap.data().partnerId;
+                document.getElementById('partner-id-input').value = activeAccountId;
+                document.getElementById('connected-status').classList.remove('hidden');
+            } else {
+                activeAccountId = uid;
+                document.getElementById('partner-id-input').value = '';
+                document.getElementById('connected-status').classList.add('hidden');
