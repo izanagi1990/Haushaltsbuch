@@ -92,7 +92,7 @@
                 
                 <button id="theme-btn" class="p-2.5 rounded-xl bg-gray-500/10 hover:bg-gray-500/20 text-xs sm:text-sm transition-all duration-200 h-[36px] w-[36px] flex items-center justify-center active:scale-95" title="Design wechseln">☀️</button>
                 
-                <button id="logout-btn" class="p-2.5 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white font-semibold text-xs transition-all duration-200 flex items-center gap-1.5 active:scale-95" title="Abmelden">
+                <button id="logout-btn" class="p-2.5 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white font-semibold text-xs transition-all duration-200 flex items-center gap-1.5 active:scale-95 hidden" title="Abmelden">
                     <span>🚪</span>
                     <span class="hidden sm:inline">Abmelden</span>
                 </button>
@@ -304,222 +304,15 @@
                 document.getElementById('auth-container').classList.add('hidden');
                 document.getElementById('main-app-container').classList.remove('hidden');
                 document.getElementById('toggle-partner-area-btn').classList.remove('hidden');
+                document.getElementById('logout-btn').classList.remove('hidden');
                 await determineActiveAccount(user.uid);
                 startRealtimeListener();
             } else {
                 currentUser = null; activeAccountId = null;
                 if (unsubscribeRealtime) unsubscribeRealtime();
                 document.getElementById('main-app-container').classList.add('hidden');
-                document.getElementById('auth-container').classList.remove('hidden');
                 document.getElementById('toggle-partner-area-btn').classList.add('hidden');
+                document.getElementById('logout-btn').classList.add('hidden');
+                document.getElementById('auth-container').classList.remove('hidden'); // Macht das Login-Fenster wieder sichtbar!
             }
         });
-
-        async function determineActiveAccount(uid) {
-            const myIdEl = document.getElementById('my-account-id');
-            if(myIdEl) myIdEl.innerText = uid;
-            
-            const userSnap = await db.collection("users").doc(uid).get();
-            if (userSnap.exists && userSnap.data().partnerId) {
-                activeAccountId = userSnap.data().partnerId;
-                if(document.getElementById('partner-id-input')) document.getElementById('partner-id-input').value = activeAccountId;
-                if(document.getElementById('connected-status')) document.getElementById('connected-status').classList.remove('hidden');
-            } else {
-                activeAccountId = uid;
-                if(document.getElementById('partner-id-input')) document.getElementById('partner-id-input').value = '';
-                if(document.getElementById('connected-status')) document.getElementById('connected-status').classList.add('hidden');
-            }
-        }
-
-        function startRealtimeListener() {
-            if (unsubscribeRealtime) unsubscribeRealtime();
-            unsubscribeRealtime = db.collection("haushaltsbuecher").doc(activeAccountId).onSnapshot((docSnap) => {
-                const data = docSnap.exists ? docSnap.data() : {};
-                transactions = data.transactions || [];
-                savingsGoals = data.savingsGoals || {};
-                recurringExpenses = data.recurringExpenses || [];
-                appliedMonths = data.appliedMonths || [];
-                familyEvents = data.familyEvents || []; 
-                updateUI();
-            });
-        }
-
-        async function saveCloudData() {
-            if (!activeAccountId) return;
-            try {
-                await db.collection("haushaltsbuecher").doc(activeAccountId).set({
-                    transactions, savingsGoals, recurringExpenses, appliedMonths, familyEvents 
-                }, { merge: true });
-            } catch (e) { console.error("Fehler: ", e); }
-        }
-
-        function togglePartnerArea() { document.getElementById('partner-container').classList.toggle('hidden'); }
-
-        async function connectPartner() {
-            const inputId = document.getElementById('partner-id-input').value.trim();
-            if (inputId === currentUser.uid) { alert("Du kannst dich nicht mit dir selbst verknüpfen."); return; }
-            await db.collection("users").doc(currentUser.uid).set({ partnerId: inputId });
-            alert(inputId ? "Verbunden!" : "Verbindung gelöst.");
-            await determineActiveAccount(currentUser.uid);
-            startRealtimeListener();
-        }
-
-        async function handleAuth() {
-            const email = document.getElementById('auth-email').value.trim();
-            const password = document.getElementById('auth-password').value;
-            if (!email || !password) return alert("Felder ausfüllen!");
-            try {
-                if (isLoginMode) { await auth.signInWithEmailAndPassword(email, password); }
-                else { await auth.createUserWithEmailAndPassword(email, password); alert("Konto erstellt!"); }
-            } catch (e) { alert("Fehler: " + e.message); }
-        }
-
-        function toggleAuthMode() {
-            isLoginMode = !isLoginMode;
-            document.getElementById('auth-title').innerText = isLoginMode ? "🔑 Anmelden" : "📝 Registrieren";
-            document.getElementById('auth-submit-btn').innerText = isLoginMode ? "Einloggen" : "Konto erstellen";
-            document.getElementById('auth-toggle-btn').innerText = isLoginMode ? "Noch kein Konto? Registrieren" : "Hier einloggen";
-        }
-
-        function toggleEventFormView() {
-            showEventForm = !showEventForm;
-            const container = document.getElementById('event-form-container');
-            const arrow = document.getElementById('event-toggle-arrow');
-            if (showEventForm) {
-                container.classList.remove('hidden');
-                arrow.innerText = '▼';
-            } else {
-                container.classList.add('hidden');
-                arrow.innerText = '►';
-            }
-        }
-
-        document.getElementById('toggle-event-form-btn').addEventListener('click', toggleEventFormView);
-
-        function addFamilyEvent() {
-            const tEl = document.getElementById('event-title'), dEl = document.getElementById('event-date'), timeEl = document.getElementById('event-time');
-            if (!tEl.value.trim() || !dEl.value) return alert("Daten unvollständig.");
-            
-            familyEvents.push({ 
-                title: tEl.value.trim(), 
-                date: dEl.value, 
-                time: timeEl.value || "", 
-                id: Date.now().toString() 
-            });
-            
-            tEl.value = ''; 
-            setDefaultDate(); 
-            toggleEventFormView(); 
-            updateUI(); 
-            saveCloudData();
-        }
-
-        function deleteFamilyEvent(id) { familyEvents = familyEvents.filter(e => e.id !== id); updateUI(); saveCloudData(); }
-
-        function formatGermanDate(dateStr) {
-            if (!dateStr) return "";
-            const parts = dateStr.split('-');
-            if (parts.length !== 3) return dateStr;
-            return `${parts[2]}.${parts[1]}.${parts[0]}`;
-        }
-
-        function renderUpcomingEvents() {
-            const container = document.getElementById('upcoming-events-list'); container.innerHTML = '';
-            const titleEl = document.getElementById('events-list-title');
-            const today = new Date().toISOString().split('T')[0];
-            
-            let valid = familyEvents.filter(e => e.date >= today).sort((a,b) => {
-                if (a.date !== b.date) {
-                    return a.date.localeCompare(b.date);
-                }
-                const timeA = a.time || "00:00";
-                const timeB = b.time || "00:00";
-                return timeA.localeCompare(timeB);
-            }).slice(0, 5);
-            
-            if (valid.length === 0) {
-                titleEl.innerText = "📌 Keine anstehenden Termine";
-                container.innerHTML = '<p class="text-xs text-muted text-center py-4 font-light">Keine Termine geplant.</p>'; 
-                return; 
-            } else if (valid.length === 1) {
-                titleEl.innerText = "📌 Der nächste Familien-Termin";
-            } else {
-                titleEl.innerText = `📌 Die nächsten ${valid.length} Familien-Termine`;
-            }
-
-            valid.forEach(e => {
-                const div = document.createElement('div');
-                div.className = 'flex justify-between items-center p-3 rounded-2xl border border-custom bg-gray-500/[0.02] hover:bg-gray-500/[0.04] transition-colors';
-                
-                const timeStr = e.time ? ` um ${e.time} Uhr` : '';
-                const dateFormatted = formatGermanDate(e.date);
-
-                div.innerHTML = `<div><p class="text-sm font-semibold">${e.title}</p><p class="text-[11px] text-muted font-medium mt-0.5">${dateFormatted}${timeStr}</p></div><button onclick="deleteFamilyEvent('${e.id}')" class="text-gray-400 hover:text-rose-500 text-2xl px-2 leading-none transition-colors">&times;</button>`;
-                container.appendChild(div);
-            });
-        }
-
-        function setDefaultDate() {
-            const now = new Date();
-            const today = now.toISOString().split('T')[0];
-            const currentTime = String(now.getHours()).padStart(2, '0') + ":" + String(now.getMinutes()).padStart(2, '0');
-            if(document.getElementById('transaction-date')) document.getElementById('transaction-date').value = today;
-            if(document.getElementById('event-date')) document.getElementById('event-date').value = today;
-            if(document.getElementById('event-time')) document.getElementById('event-time').value = currentTime;
-        }
-
-        function applyTheme() {
-            const body = document.getElementById('app-body'), btn = document.getElementById('theme-btn');
-            body.className = "min-h-screen pb-12 " + (currentTheme === 'dark' ? 'dark-mode' : 'light-mode');
-            btn.innerText = currentTheme === 'dark' ? "🌙" : "☀️";
-            localStorage.setItem('theme', currentTheme);
-        }
-
-        document.getElementById('theme-btn').addEventListener('click', () => { currentTheme = currentTheme === 'light' ? 'dark' : 'light'; applyTheme(); updateUI(); });
-        
-        function openSettings() { 
-            const modal = document.getElementById('settings-modal');
-            modal.classList.remove('opacity-0', 'pointer-events-none'); 
-            modal.querySelector('.app-card').classList.remove('scale-95');
-            renderRecurringList(); 
-        }
-        function closeSettings() { 
-            const modal = document.getElementById('settings-modal');
-            modal.classList.add('opacity-0', 'pointer-events-none'); 
-            modal.querySelector('.app-card').classList.add('scale-95');
-        }
-
-        function addRecurringExpense() {
-            const d = document.getElementById('rec-description').value.trim(), a = parseFloat(document.getElementById('rec-amount').value), c = document.getElementById('rec-category').value;
-            if (!d || isNaN(a)) return alert("Eintrag prüfen.");
-            recurringExpenses.push({ description: d, amount: a, category: c });
-            document.getElementById('rec-description').value = ''; document.getElementById('rec-amount').value = '';
-            renderRecurringList(); checkAndApplyRecurring(); saveCloudData();
-        }
-
-        function deleteRecurringExpense(i) { recurringExpenses.splice(i, 1); renderRecurringList(); saveCloudData(); }
-
-        function renderRecurringList() {
-            const container = document.getElementById('recurring-list'); container.innerHTML = '';
-            recurringExpenses.forEach((item, index) => {
-                const div = document.createElement('div'); div.className = 'flex justify-between items-center p-2.5 rounded-xl bg-gray-500/5 text-xs border border-custom/40';
-                div.innerHTML = `<div><p class="font-semibold">${item.description}</p></div><div><span class="text-rose-500 font-bold">-${item.amount.toFixed(2)} €</span><button onclick="deleteRecurringExpense(${index})" class="ml-2 text-gray-400 hover:text-rose-500 text-base font-light leading-none">&times;</button></div>`;
-                container.appendChild(div);
-            });
-        }
-
-        function checkAndApplyRecurring() {
-            const selMon = document.getElementById('month-filter').value;
-            if (!selMon || appliedMonths.includes(selMon)) return;
-            recurringExpenses.forEach(rec => {
-                transactions.push({ description: rec.description + ' (Fixkosten)', amount: rec.amount, category: rec.category, type: 'expense', date: new Date().toISOString().split('T')[0], monthStr: selMon });
-            });
-            if (recurringExpenses.length > 0) { appliedMonths.push(selMon); saveCloudData(); }
-        }
-
-        function initMonthFilter() {
-            const filter = document.getElementById('month-filter'), now = new Date();
-            for (let i = -6; i <= 6; i++) {
-                const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-                const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-                const opt = document.createElement('option'); opt.value = val; opt.innerText = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
