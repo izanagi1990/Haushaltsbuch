@@ -142,8 +142,13 @@
             </div>
 
             <div class="app-card rounded-2xl p-5 border border-custom shadow-sm">
-                <h4 class="text-sm font-bold uppercase tracking-wider mb-3 border-b border-custom pb-2">📋 Buchungen in diesem Monat</h4>
-                <div id="transaction-list" class="space-y-2.5"></div>
+                <button id="toggle-transactions-btn" class="w-full flex justify-between items-center text-sm font-bold uppercase tracking-wider border-b border-custom pb-2 text-left focus:outline-none cursor-pointer">
+                    <span>📋 Buchungen in diesem Monat</span>
+                    <span id="toggle-arrow" class="text-xs transition-transform duration-200">▼</span>
+                </button>
+                <div id="transaction-list-container" class="space-y-2.5 mt-3 transition-all duration-300">
+                    <div id="transaction-list" class="space-y-2.5"></div>
+                </div>
             </div>
         </div>
     </main>
@@ -192,6 +197,7 @@
         let currentUser = null, activeAccountId = null, unsubscribeRealtime = null;
         let transactions = [], savingsGoals = {}, recurringExpenses = [], appliedMonths = [], familyEvents = []; 
         let currentTheme = localStorage.getItem('theme') || 'light', financeChart = null, isLoginMode = true;
+        let showTransactions = true;
 
         const monthNames = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
 
@@ -371,6 +377,21 @@
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
             });
         }
+
+        function toggleTransactionsView() {
+            showTransactions = !showTransactions;
+            const container = document.getElementById('transaction-list-container');
+            const arrow = document.getElementById('toggle-arrow');
+            if (showTransactions) {
+                container.classList.remove('hidden');
+                arrow.innerText = '▼';
+            } else {
+                container.classList.add('hidden');
+                arrow.innerText = '►';
+            }
+        }
+
+        document.getElementById('toggle-transactions-btn').addEventListener('click', toggleTransactionsView);
 
         function updateUI() {
             checkAndApplyRecurring(); renderUpcomingEvents();
