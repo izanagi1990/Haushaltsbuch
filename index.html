@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Unser Haushaltsbuch & Familienkalender</title>
-    <!-- Tailwind CSS -->
+    
+    <link rel="apple-touch-icon" href="app-icon.png">
+    <link rel="icon" type="image/png" href="app-icon.png">
+    
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <!-- Chart.js für das Diagramm -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         .light-mode {
@@ -45,7 +47,6 @@
 </head>
 <body id="app-body" class="font-sans min-h-screen pb-10 light-mode">
 
-    <!-- HEADER -->
     <header class="app-card border-b border-custom shadow-sm sticky top-0 z-40">
         <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
             <h1 class="text-xl font-bold tracking-tight">📊 Haushaltsbuch & Kalender</h1>
@@ -57,10 +58,8 @@
         </div>
     </header>
 
-    <!-- MAIN CONTAINER -->
     <main class="max-w-4xl mx-auto px-4 mt-6">
 
-        <!-- 1. AUTHENTIFIZIERUNG -->
         <div id="auth-container" class="max-w-md mx-auto app-card rounded-2xl p-6 border border-custom shadow-xl mt-12">
             <h2 id="auth-title" class="text-xl font-bold text-center mb-6">🔑 Anmelden</h2>
             <div class="space-y-4">
@@ -77,10 +76,8 @@
             </div>
         </div>
 
-        <!-- Haupt-Inhalt -->
         <div id="main-app-container" class="space-y-6 hidden">
 
-            <!-- PARTNER VERKNÜPFUNG -->
             <div id="partner-container" class="app-card rounded-2xl p-4 border border-custom shadow-sm grid grid-cols-1 md:grid-cols-2 gap-4 items-center hidden">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-wider text-muted">Deine ID (Für deinen Partner):</p>
@@ -96,9 +93,7 @@
                 </div>
             </div>
 
-            <!-- FAMILIENKALENDER -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Termin-Eingabe -->
                 <div class="app-card rounded-2xl p-4 border border-custom shadow-sm flex flex-col justify-between">
                     <div>
                         <h4 class="text-xs font-bold uppercase tracking-wider text-muted mb-3">📅 Neuen Termin planen</h4>
@@ -110,16 +105,13 @@
                     <button id="add-event-btn" class="w-full mt-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-xl text-xs transition shadow-sm">Termin hinzufügen</button>
                 </div>
 
-                <!-- Termin-Anzeige -->
                 <div class="app-card rounded-2xl p-4 border border-custom shadow-sm md:col-span-2 flex flex-col justify-between">
                     <h4 class="text-xs font-bold uppercase tracking-wider text-muted mb-2">📌 Die nächsten 2 Familien-Termine</h4>
                     <div id="upcoming-events-list" class="space-y-2 flex-1 flex flex-col justify-center">
-                        <!-- Termine werden dynamisch geladen -->
-                    </div>
+                        </div>
                 </div>
             </div>
 
-            <!-- FILTER & JAHRES-SPARZIEL -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="app-card rounded-2xl p-4 border border-custom shadow-sm">
                     <label class="block text-xs font-semibold uppercase tracking-wider text-muted mb-1">Monat auswählen</label>
@@ -134,7 +126,6 @@
                 </div>
             </div>
 
-            <!-- FINANZ-ÜBERSICHT & CHART -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="app-card rounded-2xl p-5 border border-custom shadow-sm flex flex-col justify-center">
                     <p class="text-xs font-semibold uppercase tracking-wider text-muted">Aktueller Kontostand</p>
@@ -147,7 +138,6 @@
                 </div>
             </div>
 
-            <!-- RECHNER / NEUER EINTRAG -->
             <div class="app-card rounded-2xl p-5 border border-custom shadow-sm">
                 <h4 class="text-sm font-bold uppercase tracking-wider mb-4 border-b border-custom pb-2">➕ Neuen Eintrag hinzufügen</h4>
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -170,7 +160,6 @@
                 </div>
             </div>
 
-            <!-- JAHRES-SPARZIEL PROGRESS BAR -->
             <div id="progress-container" class="app-card rounded-2xl p-4 border border-custom shadow-sm hidden space-y-2">
                 <div class="flex justify-between items-center text-xs font-semibold">
                     <span id="progress-text" class="text-title">Jahresziel erreicht: 0%</span>
@@ -182,7 +171,6 @@
                 <p id="savings-detail-text" class="text-xs text-center font-medium"></p>
             </div>
 
-            <!-- TRANSAKTIONSLISTE -->
             <div class="app-card rounded-2xl p-5 border border-custom shadow-sm">
                 <h4 class="text-sm font-bold uppercase tracking-wider mb-3 border-b border-custom pb-2">📋 Buchungen in diesem Monat</h4>
                 <div id="transaction-list" class="space-y-2.5"></div>
@@ -191,7 +179,6 @@
         </div>
     </main>
 
-    <!-- SETTINGS MODAL -->
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none transition-opacity duration-300">
         <div class="app-card rounded-2xl p-5 border border-custom max-w-md w-full shadow-2xl space-y-4">
             <div class="flex justify-between items-center border-b border-custom pb-2">
@@ -215,7 +202,6 @@
         </div>
     </div>
 
-    <!-- Firebase Scripte -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
@@ -255,574 +241,3 @@
                 currentUser = user;
                 document.getElementById('auth-container').classList.add('hidden');
                 document.getElementById('main-app-container').classList.remove('hidden');
-                document.getElementById('toggle-partner-area-btn').classList.remove('hidden');
-                
-                await determineActiveAccount(user.uid);
-                startRealtimeListener();
-            } else {
-                currentUser = null;
-                activeAccountId = null;
-                if (unsubscribeRealtime) unsubscribeRealtime();
-                document.getElementById('main-app-container').classList.add('hidden');
-                document.getElementById('auth-container').classList.remove('hidden');
-                document.getElementById('toggle-partner-area-btn').classList.add('hidden');
-            }
-        });
-
-        async function determineActiveAccount(uid) {
-            document.getElementById('my-account-id').innerText = uid;
-            const userRef = db.collection("users").doc(uid);
-            const userSnap = await userRef.get();
-            
-            if (userSnap.exists && userSnap.data().partnerId) {
-                activeAccountId = userSnap.data().partnerId;
-                document.getElementById('partner-id-input').value = activeAccountId;
-                document.getElementById('connected-status').classList.remove('hidden');
-            } else {
-                activeAccountId = uid;
-                document.getElementById('partner-id-input').value = '';
-                document.getElementById('connected-status').classList.add('hidden');
-            }
-        }
-
-        function startRealtimeListener() {
-            if (unsubscribeRealtime) unsubscribeRealtime();
-            
-            const docRef = db.collection("haushaltsbuecher").doc(activeAccountId);
-            unsubscribeRealtime = docRef.onSnapshot((docSnap) => {
-                if (docSnap.exists) {
-                    const data = docSnap.data();
-                    transactions = data.transactions || [];
-                    savingsGoals = data.savingsGoals || {};
-                    recurringExpenses = data.recurringExpenses || [];
-                    appliedMonths = data.appliedMonths || [];
-                    familyEvents = data.familyEvents || []; 
-                } else {
-                    transactions = [];
-                    savingsGoals = {};
-                    recurringExpenses = [];
-                    appliedMonths = [];
-                    familyEvents = [];
-                }
-                updateUI();
-            });
-        }
-
-        // KORREKTUR HIER: { merge: true } sorgt dafür, dass keine Daten beim Überschreiben verloren gehen!
-        async function saveCloudData() {
-            if (!activeAccountId) return;
-            try {
-                await db.collection("haushaltsbuecher").doc(activeAccountId).set({
-                    transactions: transactions,
-                    savingsGoals: savingsGoals,
-                    recurringExpenses: recurringExpenses,
-                    appliedMonths: appliedMonths,
-                    familyEvents: familyEvents 
-                }, { merge: true });
-            } catch (e) {
-                console.error("Fehler beim Speichern: ", e);
-            }
-        }
-
-        function togglePartnerArea() {
-            const container = document.getElementById('partner-container');
-            container.classList.toggle('hidden');
-        }
-
-        async function connectPartner() {
-            const inputId = document.getElementById('partner-id-input').value.trim();
-            if (!inputId) {
-                await db.collection("users").doc(currentUser.uid).set({ partnerId: "" });
-                alert("Verknüpfung gelöst. Du nutzt wieder dein eigenes Haushaltsbuch.");
-                await determineActiveAccount(currentUser.uid);
-                startRealtimeListener();
-                return;
-            }
-            if (inputId === currentUser.uid) {
-                alert("Du kannst dich nicht mit deiner eigenen ID verbinden.");
-                return;
-            }
-            await db.collection("users").doc(currentUser.uid).set({ partnerId: inputId });
-            alert("Erfolgreich verbunden! Die App lädt nun die gemeinsamen Daten.");
-            await determineActiveAccount(currentUser.uid);
-            startRealtimeListener();
-        }
-
-        async function handleAuth() {
-            const email = document.getElementById('auth-email').value.trim();
-            const password = document.getElementById('auth-password').value;
-            if (!email || !password) {
-                alert("Bitte fülle alle Felder aus.");
-                return;
-            }
-            try {
-                if (isLoginMode) {
-                    await auth.signInWithEmailAndPassword(email, password);
-                } else {
-                    await auth.createUserWithEmailAndPassword(email, password);
-                    alert("Konto erfolgreich erstellt!");
-                }
-            } catch (error) {
-                alert("Fehler: " + error.message);
-            }
-        }
-
-        function toggleAuthMode() {
-            isLoginMode = !isLoginMode;
-            document.getElementById('auth-title').innerText = isLoginMode ? "🔑 Anmelden" : "📝 Registrieren";
-            document.getElementById('auth-submit-btn').innerText = isLoginMode ? "Einloggen" : "Konto erstellen";
-            document.getElementById('auth-toggle-btn').innerText = isLoginMode ? "Noch kein Konto? Jetzt registrieren" : "Bereits ein Konto? Hier einloggen";
-        }
-
-        // --- CALENDAR LOGIK ---
-        function addFamilyEvent() {
-            const titleEl = document.getElementById('event-title');
-            const dateEl = document.getElementById('event-date');
-            const title = titleEl.value.trim();
-            const date = dateEl.value;
-
-            if (!title || !date) {
-                alert("Bitte gib einen Namen und ein Datum für den Termin ein.");
-                return;
-            }
-
-            familyEvents.push({ title, date, id: Date.now().toString() });
-            titleEl.value = '';
-            dateEl.value = new Date().toISOString().split('T')[0];
-
-            updateUI();
-            saveCloudData();
-        }
-
-        function deleteFamilyEvent(eventId) {
-            familyEvents = familyEvents.filter(e => e.id !== eventId);
-            updateUI();
-            saveCloudData();
-        }
-
-        function renderUpcomingEvents() {
-            const container = document.getElementById('upcoming-events-list');
-            container.innerHTML = '';
-
-            const todayStr = new Date().toISOString().split('T')[0];
-
-            // 1. Filtere abgelaufene Termine heraus
-            let validEvents = familyEvents.filter(e => e.date >= todayStr);
-
-            // Falls Termine im Hintergrund bereinigt wurden, speichern wir das direkt
-            if (validEvents.length !== familyEvents.length) {
-                familyEvents = validEvents;
-                saveCloudData();
-            }
-
-            // 2. Chronologisch sortieren
-            validEvents.sort((a, b) => a.date.localeCompare(b.date));
-
-            // 3. Nur die nächsten 2 Termine holen
-            const topTwoEvents = validEvents.slice(0, 2);
-
-            if (topTwoEvents.length === 0) {
-                container.innerHTML = '<p class="text-xs text-muted text-center py-4 font-light">Keine kommenden Termine geplant.</p>';
-                return;
-            }
-
-            topTwoEvents.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'flex justify-between items-center p-2.5 rounded-xl border border-custom bg-gray-500/5 transition-all';
-                div.innerHTML = `
-                    <div class="flex items-center space-x-3">
-                        <div class="bg-blue-500/10 text-blue-500 p-2 rounded-lg text-center min-w-[50px]">
-                            <p class="text-[10px] font-bold uppercase">${formatDateToDayMonth(item.date).month}</p>
-                            <p class="text-sm font-extrabold leading-none">${formatDateToDayMonth(item.date).day}</p>
-                        </div>
-                        <div>
-                            <p class="text-sm font-semibold text-title leading-tight">${item.title}</p>
-                            <p class="text-[11px] text-muted">${formatDateString(item.date)}</p>
-                        </div>
-                    </div>
-                    <button id="del-event-${item.id}" class="text-gray-400 hover:text-rose-500 transition text-lg px-2">&times;</button>
-                `;
-                container.appendChild(div);
-                document.getElementById(`del-event-${item.id}`).addEventListener('click', () => deleteFamilyEvent(item.id));
-            });
-        }
-
-        function formatDateToDayMonth(dateStr) {
-            const parts = dateStr.split("-");
-            if(parts.length !== 3) return { day: "00", month: "??? "};
-            const d = new Date(parts[0], parts[1] - 1, parts[2]);
-            const shortMonths = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
-            return {
-                day: parts[2],
-                month: shortMonths[d.getMonth()]
-            };
-        }
-
-        // --- RESTLICHE APP LOGIK ---
-        function setDefaultDate() {
-            document.getElementById('transaction-date').value = new Date().toISOString().split('T')[0];
-            document.getElementById('event-date').value = new Date().toISOString().split('T')[0];
-        }
-
-        function applyTheme() {
-            const body = document.getElementById('app-body');
-            const btn = document.getElementById('theme-btn');
-            if (currentTheme === 'dark') {
-                body.className = "font-sans min-h-screen pb-10 dark-mode";
-                btn.innerText = "🌙";
-            } else {
-                body.className = "font-sans min-h-screen pb-10 light-mode";
-                btn.innerText = "☀️";
-            }
-            localStorage.setItem('theme', currentTheme);
-        }
-
-        function toggleTheme() {
-            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
-            applyTheme();
-            updateUI();
-        }
-
-        function openSettings() {
-            document.getElementById('settings-modal').classList.remove('opacity-0', 'pointer-events-none');
-            renderRecurringList();
-        }
-
-        function closeSettings() {
-            document.getElementById('settings-modal').classList.add('opacity-0', 'pointer-events-none');
-        }
-
-        function addRecurringExpense() {
-            const descEl = document.getElementById('rec-description');
-            const amtEl = document.getElementById('rec-amount');
-            const catEl = document.getElementById('rec-category');
-            const description = descEl.value.trim();
-            const amount = parseFloat(amtEl.value);
-            const category = catEl.value;
-
-            if (!description || isNaN(amount) || amount <= 0) {
-                alert('Bitte trage Name und Betrag ein.');
-                return;
-            }
-            recurringExpenses.push({ description, amount, category });
-            descEl.value = ''; amtEl.value = '';
-            renderRecurringList();
-            checkAndApplyRecurring();
-            saveCloudData();
-        }
-
-        function deleteRecurringExpense(index) {
-            recurringExpenses.splice(index, 1);
-            renderRecurringList();
-            saveCloudData();
-        }
-
-        function renderRecurringList() {
-            const container = document.getElementById('recurring-list');
-            container.innerHTML = '';
-            if (recurringExpenses.length === 0) {
-                container.innerHTML = '<p class="text-xs text-muted text-center py-2">Keine wiederkehrenden Kosten eingerichtet.</p>';
-                return;
-            }
-            recurringExpenses.forEach((item, index) => {
-                const div = document.createElement('div');
-                div.className = 'flex justify-between items-center p-2 rounded-lg bg-gray-500/5 border border-gray-500/10 text-xs';
-                div.innerHTML = `
-                    <div>
-                        <p class="font-medium text-title">${item.description}</p>
-                        <p class="text-[10px] text-muted">${item.category}</p>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <span class="font-bold text-rose-500">-${item.amount.toFixed(2)} €</span>
-                        <button id="del-rec-${index}" class="text-gray-400 hover:text-rose-500 text-sm font-bold">&times;</button>
-                    </div>
-                `;
-                container.appendChild(div);
-                document.getElementById(`del-rec-${index}`).addEventListener('click', () => deleteRecurringExpense(index));
-            });
-        }
-
-        function checkAndApplyRecurring() {
-            const filterEl = document.getElementById('month-filter');
-            if (!filterEl) return;
-            const selectedMonthStr = filterEl.value;
-            const today = new Date().toISOString().split('T')[0];
-            
-            if (!appliedMonths.includes(selectedMonthStr)) {
-                recurringExpenses.forEach(rec => {
-                    transactions.push({
-                        description: rec.description + ' (Fixkosten)',
-                        amount: rec.amount,
-                        category: rec.category,
-                        type: 'expense',
-                        date: today,
-                        monthStr: selectedMonthStr
-                    });
-                });
-                if (recurringExpenses.length > 0) {
-                    appliedMonths.push(selectedMonthStr);
-                    saveCloudData();
-                }
-            }
-        }
-
-        function initMonthFilter() {
-            const filter = document.getElementById('month-filter');
-            const now = new Date();
-            const currentYear = now.getFullYear();
-            const currentMonth = now.getMonth();
-            filter.innerHTML = '';
-
-            for (let i = -6; i <= 6; i++) {
-                const d = new Date(currentYear, currentMonth + i, 1);
-                const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-                const option = document.createElement('option');
-                option.value = val;
-                option.innerText = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
-                if (i === 0) option.selected = true;
-                filter.appendChild(option);
-            }
-            filter.addEventListener('change', updateUI);
-        }
-
-        function saveSavingsGoal() {
-            const filterEl = document.getElementById('month-filter');
-            if (!filterEl || !filterEl.value) return;
-            const currentYearStr = filterEl.value.split('-')[0];
-            
-            const goalInput = document.getElementById('savings-goal-input');
-            const goalValue = parseFloat(goalInput.value);
-
-            if (isNaN(goalValue) || goalValue < 0) {
-                alert('Bitte trage ein gültiges Jahres-Sparziel ein.');
-                return;
-            }
-            savingsGoals[currentYearStr] = goalValue;
-            updateUI();
-            saveCloudData();
-        }
-
-        function renderChart(income, expense, yearlyGoal) {
-            const ctx = document.getElementById('financeChart').getContext('2d');
-            const isDark = currentTheme === 'dark';
-            const textColor = isDark ? '#9ca3af' : '#4b5563';
-            const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)';
-
-            if (financeChart) financeChart.destroy();
-
-            financeChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['Einnahmen (Monat)', 'Ausgaben (Monat)', 'Jahres-Sparziel'],
-                    datasets: [{
-                        data: [income, expense, yearlyGoal],
-                        backgroundColor: ['rgba(16, 185, 129, 0.75)', 'rgba(244, 63, 94, 0.75)', 'rgba(59, 130, 246, 0.75)'],
-                        borderColor: ['#10b981', '#f43f5e', '#3b82f6'],
-                        borderWidth: 1.5,
-                        borderRadius: 8
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { ticks: { color: textColor, font: { size: 11 } }, grid: { display: false } },
-                        y: { ticks: { color: textColor, font: { size: 10 } }, grid: { color: gridColor } }
-                    }
-                }
-            });
-        }
-
-        function formatDateString(dateStr) {
-            if (!dateStr) return "";
-            const parts = dateStr.split("-");
-            if (parts.length !== 3) return dateStr;
-            return `${parts[2]}.${parts[1]}.${parts[0]}`;
-        }
-
-        function updateUI() {
-            checkAndApplyRecurring();
-            renderUpcomingEvents(); 
-
-            const list = document.getElementById('transaction-list');
-            const totalBalanceEl = document.getElementById('total-balance');
-            const carryOverEl = document.getElementById('carry-over-info');
-            const filterEl = document.getElementById('month-filter');
-            if (!filterEl || !filterEl.value) return;
-            const selectedMonthStr = filterEl.value;
-            
-            const systemYear = new Date().getFullYear();
-            const currentYearStr = selectedMonthStr.split('-')[0];
-            const isYearPast = parseInt(currentYearStr) < systemYear;
-            
-            list.innerHTML = '';
-            let carryOver = 0, monthIncome = 0, monthExpense = 0, monthSavings = 0;
-            let totalYearlySavings = 0;
-
-            transactions.forEach((t) => {
-                const tAmount = t.type === 'income' ? t.amount : -t.amount;
-                const tYear = t.monthStr ? t.monthStr.split('-')[0] : "";
-
-                if (t.monthStr < selectedMonthStr) {
-                    carryOver += tAmount;
-                } else if (t.monthStr === selectedMonthStr) {
-                    if (t.type === 'income') monthIncome += t.amount;
-                    if (t.type === 'expense') monthExpense += t.amount;
-                    if (t.type === 'savings') monthSavings += t.amount;
-                }
-
-                if (tYear === currentYearStr && t.type === 'savings') {
-                    totalYearlySavings += t.amount;
-                }
-            });
-
-            let monthTotal = monthIncome - monthExpense - monthSavings;
-            let finalTotal = carryOver + monthTotal;
-            
-            const currentYearlyGoal = savingsGoals[currentYearStr] || 0;
-            const isGoalReached = currentYearlyGoal > 0 && totalYearlySavings >= currentYearlyGoal;
-
-            const goalCard = document.getElementById('savings-goal-card');
-            
-            if (currentYearlyGoal <= 0) {
-                goalCard.classList.remove('hidden');
-                document.getElementById('savings-goal-input').value = '';
-            } else if (isYearPast || isGoalReached) {
-                goalCard.classList.remove('hidden');
-                document.getElementById('savings-goal-input').value = currentYearlyGoal;
-            } else {
-                goalCard.classList.add('hidden');
-            }
-
-            const progressContainer = document.getElementById('progress-container');
-            if (currentYearlyGoal > 0) {
-                progressContainer.classList.remove('hidden');
-                let percent = Math.min(100, Math.round((totalYearlySavings / currentYearlyGoal) * 100));
-                document.getElementById('progress-text').innerText = `Jahresziel ${currentYearlyStr} erreicht: ${percent}%`;
-                document.getElementById('goal-status-text').innerText = `${totalYearlySavings.toFixed(2).replace('.', ',')} / ${currentYearlyGoal.toFixed(0)} €`;
-                document.getElementById('progress-bar').style.width = `${percent}%`;
-                document.getElementById('savings-detail-text').innerText = `Im Jahr ${currentYearlyStr} gespart: ${totalYearlySavings.toFixed(2).replace('.', ',')} € von ${currentYearlyGoal.toFixed(2).replace('.', ',')} €`;
-                
-                if (percent >= 100) {
-                    document.getElementById('progress-bar').className = "bg-emerald-500 h-2.5 rounded-full transition-all duration-500";
-                    document.getElementById('savings-detail-text').className = "text-xs font-medium text-center text-emerald-500";
-                } else {
-                    document.getElementById('progress-bar').className = "bg-blue-500 h-2.5 rounded-full transition-all duration-500";
-                    document.getElementById('savings-detail-text').className = "text-xs font-medium text-center text-blue-500";
-                }
-            } else {
-                progressContainer.classList.add('hidden');
-            }
-
-            renderChart(monthIncome, monthExpense + monthSavings, currentYearlyGoal);
-            const currentMonthTransactions = transactions.filter(t => t.monthStr === selectedMonthStr);
-
-            if (currentMonthTransactions.length === 0) {
-                list.innerHTML = `<p class="text-muted text-center py-4 text-sm font-light">Keine Einträge in diesem Monat.</p>`;
-            } else {
-                currentMonthTransactions.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
-                currentMonthTransactions.forEach((t) => {
-                    const actualIndex = transactions.indexOf(t);
-                    const isIncome = t.type === 'income';
-                    const isSavings = t.type === 'savings';
-                    const item = document.createElement('div');
-                    
-                    if (currentTheme === 'dark') {
-                        if (isIncome) item.className = 'flex justify-between items-center p-3 rounded-xl border bg-emerald-950/30 border-emerald-900/40';
-                        else if (isSavings) item.className = 'flex justify-between items-center p-3 rounded-xl border bg-blue-950/30 border-blue-900/40';
-                        else item.className = 'flex justify-between items-center p-3 rounded-xl border bg-rose-950/30 border-rose-900/40';
-                    } else {
-                        if (isIncome) item.className = 'flex justify-between items-center p-3 rounded-xl border bg-emerald-50/60 border-emerald-100';
-                        else if (isSavings) item.className = 'flex justify-between items-center p-3 rounded-xl border bg-blue-50/60 border-blue-100';
-                        else item.className = 'flex justify-between items-center p-3 rounded-xl border bg-rose-50/60 border-rose-100';
-                    }
-                    
-                    const displayDate = t.date ? formatDateString(t.date) : "";
-                    const categoryText = displayDate ? `${t.category} • ${displayDate}` : t.category;
-
-                    let amountPrefix = '-', amountClass = 'text-rose-500';
-                    if (isIncome) { amountPrefix = '+'; amountClass = 'text-emerald-500'; }
-                    else if (isSavings) { amountPrefix = '➔'; amountClass = 'text-blue-500'; }
-
-                    item.innerHTML = `
-                        <div>
-                            <p class="font-medium text-sm ${currentTheme === 'dark' ? 'text-gray-200' : 'text-gray-800'}">${t.description}</p>
-                            <p class="text-xs text-muted">${categoryText}</p>
-                        </div>
-                        <div class="flex items-center space-x-3">
-                            <span class="font-semibold text-sm ${amountClass}">${amountPrefix}${t.amount.toFixed(2).replace('.', ',')} €</span>
-                            <button id="del-t-${actualIndex}" class="text-gray-400 dark:text-gray-600 hover:text-rose-500 transition text-lg px-1">&times;</button>
-                        </div>
-                    `;
-                    list.appendChild(item);
-                    document.getElementById(`del-t-${actualIndex}`).addEventListener('click', () => deleteTransaction(actualIndex));
-                });
-            }
-
-            carryOverEl.innerText = `Übertrag aus Vormonaten: ${carryOver.toFixed(2).replace('.', ',')} €`;
-            totalBalanceEl.innerText = `${finalTotal.toFixed(2).replace('.', ',')} €`;
-            if (finalTotal > 0) totalBalanceEl.className = "text-3xl font-bold mt-1 text-emerald-500";
-            else if (finalTotal < 0) totalBalanceEl.className = "text-3xl font-bold mt-1 text-rose-500";
-            else totalBalanceEl.className = `text-3xl font-bold mt-1 ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`;
-        }
-
-        function addTransaction(type) {
-            const descInput = document.getElementById('description');
-            const amountInput = document.getElementById('amount');
-            const catInput = document.getElementById('category');
-            const dateInput = document.getElementById('transaction-date');
-            const selectedMonthStr = document.getElementById('month-filter').value;
-
-            let description = descInput.value.trim();
-            const amount = parseFloat(amountInput.value);
-            let category = catInput.value;
-            const date = dateInput.value;
-
-            if (type === 'savings') {
-                category = 'Sparziel';
-                if (!description) description = 'Geld zur Seite gelegt';
-            }
-            if (!description || isNaN(amount) || amount <= 0 || !date) {
-                alert('Bitte trage eine Beschreibung, einen gültigen Betrag und ein Datum ein.');
-                return;
-            }
-
-            const dateMonthStr = date.substring(0, 7);
-            if (dateMonthStr !== selectedMonthStr) {
-                const confirmChoice = confirm("Hinweis: Das gewählte Datum liegt nicht im aktuell ausgewählten Monat. Soll der Eintrag trotzdem in diesem Filtermonat gebucht werden?");
-                if (!confirmChoice) return;
-            }
-
-            transactions.push({ description, amount, category, type, date, monthStr: selectedMonthStr });
-            descInput.value = ''; amountInput.value = '';
-            setDefaultDate(); updateUI(); saveCloudData();
-        }
-
-        function deleteTransaction(index) {
-            transactions.splice(index, 1);
-            updateUI(); saveCloudData();
-        }
-
-        document.getElementById('theme-btn').addEventListener('click', toggleTheme);
-        document.getElementById('logout-btn').addEventListener('click', () => auth.signOut());
-        document.getElementById('toggle-partner-area-btn').addEventListener('click', togglePartnerArea);
-        document.getElementById('auth-submit-btn').addEventListener('click', handleAuth);
-        document.getElementById('auth-toggle-btn').addEventListener('click', toggleAuthMode);
-        document.getElementById('connect-partner-btn').addEventListener('click', connectPartner);
-        document.getElementById('save-goal-btn').addEventListener('click', saveSavingsGoal);
-        document.getElementById('open-settings-btn').addEventListener('click', openSettings);
-        document.getElementById('close-settings-btn').addEventListener('click', closeSettings);
-        document.getElementById('add-rec-btn').addEventListener('click', addRecurringExpense);
-        document.getElementById('add-event-btn').addEventListener('click', addFamilyEvent); 
-        
-        document.getElementById('add-income-btn').addEventListener('click', () => addTransaction('income'));
-        document.getElementById('add-expense-btn').addEventListener('click', () => addTransaction('expense'));
-        document.getElementById('add-savings-btn').addEventListener('click', () => addTransaction('savings'));
-
-        initMonthFilter();
-        setDefaultDate();
-        applyTheme();
-    </script>
-</body>
-</html>
