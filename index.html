@@ -4,19 +4,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Unser Haushaltsbuch & Familienkalender</title>
+    
     <link rel="apple-touch-icon" href="app-icon.png?v=1">
     <link rel="icon" type="image/png" href="app-icon.png?v=1">
+    
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        .light-mode { --bg-main: #f3f4f6; --bg-card: #ffffff; --text-title: #1f2937; --text-muted: #6b7280; --border-color: #e5e7eb; }
-        .dark-mode { --bg-main: #0f172a; --bg-card: #1e293b; --text-title: #f3f4f6; --text-muted: #9ca3af; --border-color: #334155; }
+        .light-mode {
+            --bg-main: #f3f4f6;
+            --bg-card: #ffffff;
+            --text-title: #1f2937;
+            --text-muted: #6b7280;
+            --border-color: #e5e7eb;
+            --select-bg: #ffffff;
+            --select-text: #1f2937;
+        }
+        .dark-mode {
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --text-title: #f3f4f6;
+            --text-muted: #9ca3af;
+            --border-color: #334155;
+            --select-bg: #1e293b;
+            --select-text: #f3f4f6;
+        }
         body { background-color: var(--bg-main); color: var(--text-title); transition: all 0.3s ease; }
         .app-card { background-color: var(--bg-card); border-color: var(--border-color); }
         .text-title { color: var(--text-title); }
         .text-muted { color: var(--text-muted); }
         .border-custom { border-color: var(--border-color); }
-        .custom-select { background-color: var(--bg-card) !important; color: var(--text-title) !important; }
+        
+        .custom-select {
+            background-color: var(--bg-card) !important;
+            color: var(--text-title) !important;
+        }
+        .custom-select option {
+            background-color: var(--bg-card) !important;
+            color: var(--text-title) !important;
+        }
     </style>
 </head>
 <body id="app-body" class="font-sans min-h-screen pb-10 light-mode">
@@ -33,6 +59,7 @@
     </header>
 
     <main class="max-w-4xl mx-auto px-4 mt-6">
+
         <div id="auth-container" class="max-w-md mx-auto app-card rounded-2xl p-6 border border-custom shadow-xl mt-12">
             <h2 id="auth-title" class="text-xl font-bold text-center mb-6">🔑 Anmelden</h2>
             <div class="space-y-4">
@@ -50,6 +77,7 @@
         </div>
 
         <div id="main-app-container" class="space-y-6 hidden">
+
             <div id="partner-container" class="app-card rounded-2xl p-4 border border-custom shadow-sm grid grid-cols-1 md:grid-cols-2 gap-4 items-center hidden">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-wider text-muted">Deine ID (Für deinen Partner):</p>
@@ -58,7 +86,7 @@
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-muted mb-1">Mit Partner verknüpfen (ID eintragen):</label>
                     <div class="flex space-x-2">
-                        <input type="text" id="partner-id-input" placeholder="Partner ID einfügen" class="flex-1 p-2 rounded-lg border border-custom bg-transparent text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        <input type="text" id="partner-id-input" placeholder="Partner ID einfügen oder leer lassen" class="flex-1 p-2 rounded-lg border border-custom bg-transparent text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
                         <button id="connect-partner-btn" class="bg-blue-500 text-white font-semibold px-3 py-2 rounded-lg text-xs transition hover:bg-blue-600">Speichern</button>
                     </div>
                     <p id="connected-status" class="text-[10px] text-emerald-500 mt-1 font-medium hidden">✓ Verbunden mit dem gemeinsamen Haushaltsbuch</p>
@@ -66,32 +94,39 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="app-card rounded-2xl p-4 border border-custom shadow-sm flex flex-col justify-between">
+                <div class="app-card rounded-2xl p-4 border border-custom shadow-sm flex flex-col justify-between h-fit">
                     <div>
-                        <h4 class="text-xs font-bold uppercase tracking-wider text-muted mb-3">📅 Neuen Termin planen</h4>
-                        <div class="space-y-2">
-                            <input type="text" id="event-title" placeholder="Was steht an?" class="w-full p-2 rounded-xl border border-custom bg-transparent text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
-                            <input type="date" id="event-date" class="w-full p-2 rounded-xl border border-custom bg-transparent text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        <button id="toggle-event-form-btn" class="w-full flex justify-between items-center text-xs font-bold uppercase tracking-wider text-muted text-left focus:outline-none cursor-pointer">
+                            <span>📅 Neuen Termin planen</span>
+                            <span id="event-toggle-arrow" class="text-[10px]">►</span>
+                        </button>
+                        <div id="event-form-container" class="space-y-2 hidden mt-3">
+                            <input type="text" id="event-title" placeholder="Was steht an? (z.B. GEZ zahlen)" class="w-full p-2 rounded-xl border border-custom bg-transparent text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="date" id="event-date" class="w-full p-2 rounded-xl border border-custom bg-transparent text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                <input type="time" id="event-time" class="w-full p-2 rounded-xl border border-custom bg-transparent text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
+                            </div>
+                            <button id="add-event-btn" class="w-full mt-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-xl text-xs transition shadow-sm">Termin hinzufügen</button>
                         </div>
                     </div>
-                    <button id="add-event-btn" class="w-full mt-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-xl text-xs transition">Termin hinzufügen</button>
                 </div>
+
                 <div class="app-card rounded-2xl p-4 border border-custom shadow-sm md:col-span-2 flex flex-col justify-between">
-                    <h4 class="text-xs font-bold uppercase tracking-wider text-muted mb-2">📌 Die nächsten 2 Familien-Termine</h4>
-                    <div id="upcoming-events-list" class="space-y-2 flex-1 flex flex-col justify-center"></div>
+                    <h4 id="events-list-title" class="text-xs font-bold uppercase tracking-wider text-muted mb-2">📌 Die nächsten Termine</h4>
+                    <div id="upcoming-events-list" class="space-y-2 flex-1 flex flex-col justify-center min-h-[60px]"></div>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="app-card rounded-2xl p-4 border border-custom shadow-sm">
                     <label class="block text-xs font-semibold uppercase tracking-wider text-muted mb-1">Monat auswählen</label>
-                    <select id="month-filter" class="custom-select w-full p-2 rounded-xl border border-custom text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"></select>
+                    <select id="month-filter" class="custom-select w-full p-2 rounded-xl border border-custom text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer transition-colors duration-200"></select>
                 </div>
-                <div id="savings-goal-card" class="app-card rounded-2xl p-4 border border-custom shadow-sm md:col-span-2 flex flex-col justify-between">
+                <div id="savings-goal-card" class="app-card rounded-2xl p-4 border border-custom shadow-sm md:col-span-2 flex flex-col justify-between transition-all duration-300">
                     <label class="block text-xs font-semibold uppercase tracking-wider text-muted mb-1">Gesamt-Sparziel für das komplette Jahr festlegen</label>
                     <div class="flex space-x-2">
-                        <input type="number" id="savings-goal-input" step="0.01" placeholder="z.B. 6000" class="flex-1 p-2 rounded-xl border border-custom bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
-                        <button id="save-goal-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 rounded-xl text-sm transition">Jahresziel speichern</button>
+                        <input type="number" id="savings-goal-input" step="0.01" placeholder="z.B. 6000 für das ganze Jahr" class="flex-1 p-2 rounded-xl border border-custom bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        <button id="save-goal-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 rounded-xl text-sm transition shadow-sm">Jahresziel保存</button>
                     </div>
                 </div>
             </div>
@@ -99,8 +134,8 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="app-card rounded-2xl p-5 border border-custom shadow-sm flex flex-col justify-center">
                     <p class="text-xs font-semibold uppercase tracking-wider text-muted">Aktueller Kontostand</p>
-                    <h3 id="total-balance" class="text-3xl font-bold mt-1">0,00 €</h3>
-                    <p id="carry-over-info" class="text-[11px] text-muted mt-2 border-t border-custom pt-2 font-light">Übertrag: 0,00 €</p>
+                    <h3 id="total-balance" class="text-3xl font-bold mt-1 transition-colors duration-300">0,00 €</h3>
+                    <p id="carry-over-info" class="text-[11px] text-muted mt-2 border-t border-custom pt-2 font-light">Übertrag aus Vormonaten: 0,00 €</p>
                     <button id="open-settings-btn" class="w-full mt-4 bg-gray-500/10 hover:bg-gray-500/20 text-title text-xs font-semibold py-2 rounded-xl transition">⚙ Fixkosten verwalten</button>
                 </div>
                 <div class="app-card rounded-2xl p-4 border border-custom shadow-sm md:col-span-2 h-48 flex items-center justify-center">
@@ -111,7 +146,7 @@
             <div class="app-card rounded-2xl p-5 border border-custom shadow-sm">
                 <h4 class="text-sm font-bold uppercase tracking-wider mb-4 border-b border-custom pb-2">➕ Neuen Eintrag hinzufügen</h4>
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-                    <input type="text" id="description" placeholder="Beschreibung" class="p-2.5 rounded-xl border border-custom bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    <input type="text" id="description" placeholder="Name / Beschreibung" class="p-2.5 rounded-xl border border-custom bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
                     <input type="number" id="amount" step="0.01" placeholder="Betrag (€)" class="p-2.5 rounded-xl border border-custom bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
                     <select id="category" class="custom-select p-2.5 rounded-xl border border-custom text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
                         <option value="Gehalt/Einnahme">💰 Gehalt / Einnahme</option>
@@ -124,9 +159,9 @@
                     <input type="date" id="transaction-date" class="p-2.5 rounded-xl border border-custom bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
-                    <button id="add-income-btn" class="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold p-2.5 rounded-xl text-sm transition">＋ Einnahme buchen</button>
-                    <button id="add-expense-btn" class="bg-rose-500 hover:bg-rose-600 text-white font-semibold p-2.5 rounded-xl text-sm transition">－ Ausgabe buchen</button>
-                    <button id="add-savings-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold p-2.5 rounded-xl text-sm transition">➔ Aufs Jahres-Sparziel legen</button>
+                    <button id="add-income-btn" class="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold p-2.5 rounded-xl text-sm transition shadow-md shadow-emerald-500/10">＋ Einnahme buchen</button>
+                    <button id="add-expense-btn" class="bg-rose-500 hover:bg-rose-600 text-white font-semibold p-2.5 rounded-xl text-sm transition shadow-md shadow-rose-500/10">－ Ausgabe buchen</button>
+                    <button id="add-savings-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold p-2.5 rounded-xl text-sm transition shadow-md shadow-blue-500/10">➔ Aufs Jahres-Sparziel legen</button>
                 </div>
             </div>
 
@@ -136,7 +171,7 @@
                     <span id="goal-status-text" class="text-muted">0 / 0 €</span>
                 </div>
                 <div class="w-full bg-gray-500/10 rounded-full h-2.5 overflow-hidden">
-                    <div id="progress-bar" class="bg-blue-500 h-2.5 rounded-full transition-all" style="width: 0%"></div>
+                    <div id="progress-bar" class="bg-blue-500 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
                 </div>
                 <p id="savings-detail-text" class="text-xs text-center font-medium"></p>
             </div>
@@ -150,6 +185,7 @@
                     <div id="transaction-list" class="space-y-2.5"></div>
                 </div>
             </div>
+
         </div>
     </main>
 
@@ -159,8 +195,9 @@
                 <h3 class="text-base font-bold">⚙ Monatliche Fixkosten (Automatisch)</h3>
                 <button id="close-settings-btn" class="text-xl text-muted hover:text-title font-bold">&times;</button>
             </div>
+            <p class="text-xs text-muted leading-relaxed">Hier eingerichtete Beträge werden in jedem neuen Monat automatisch als Ausgabe vom Haushaltsbuch verbucht.</p>
             <div class="grid grid-cols-1 gap-2 border border-custom p-3 rounded-xl bg-gray-500/5">
-                <input type="text" id="rec-description" placeholder="z.B. Netflix..." class="p-2 rounded-lg border border-custom bg-transparent text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
+                <input type="text" id="rec-description" placeholder="z.B. Netflix, Miete..." class="p-2 rounded-lg border border-custom bg-transparent text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
                 <div class="flex space-x-2">
                     <input type="number" id="rec-amount" step="0.01" placeholder="Betrag (€)" class="w-1/2 p-2 rounded-lg border border-custom bg-transparent text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
                     <select id="rec-category" class="custom-select w-1/2 p-2 rounded-lg border border-custom text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
@@ -194,10 +231,20 @@
         const db = firebase.firestore(app);
         const auth = firebase.auth();
 
-        let currentUser = null, activeAccountId = null, unsubscribeRealtime = null;
-        let transactions = [], savingsGoals = {}, recurringExpenses = [], appliedMonths = [], familyEvents = []; 
-        let currentTheme = localStorage.getItem('theme') || 'light', financeChart = null, isLoginMode = true;
+        let currentUser = null;
+        let activeAccountId = null;
+        let unsubscribeRealtime = null;
+
+        let transactions = [];
+        let savingsGoals = {};
+        let recurringExpenses = [];
+        let appliedMonths = [];
+        let familyEvents = []; 
+        let currentTheme = localStorage.getItem('theme') || 'light';
+        let financeChart = null;
+        let isLoginMode = true;
         let showTransactions = true;
+        let showEventForm = false; 
 
         const monthNames = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
 
@@ -282,32 +329,93 @@
             document.getElementById('auth-toggle-btn').innerText = isLoginMode ? "Noch kein Konto? Registrieren" : "Hier einloggen";
         }
 
+        function toggleEventFormView() {
+            showEventForm = !showEventForm;
+            const container = document.getElementById('event-form-container');
+            const arrow = document.getElementById('event-toggle-arrow');
+            if (showEventForm) {
+                container.classList.remove('hidden');
+                arrow.innerText = '▼';
+            } else {
+                container.classList.add('hidden');
+                arrow.innerText = '►';
+            }
+        }
+
+        document.getElementById('toggle-event-form-btn').addEventListener('click', toggleEventFormView);
+
         function addFamilyEvent() {
-            const tEl = document.getElementById('event-title'), dEl = document.getElementById('event-date');
+            const tEl = document.getElementById('event-title'), dEl = document.getElementById('event-date'), timeEl = document.getElementById('event-time');
             if (!tEl.value.trim() || !dEl.value) return alert("Daten unvollständig.");
-            familyEvents.push({ title: tEl.value.trim(), date: dEl.value, id: Date.now().toString() });
-            tEl.value = ''; setDefaultDate(); updateUI(); saveCloudData();
+            
+            familyEvents.push({ 
+                title: tEl.value.trim(), 
+                date: dEl.value, 
+                time: timeEl.value || "", 
+                id: Date.now().toString() 
+            });
+            
+            tEl.value = ''; 
+            setDefaultDate(); 
+            toggleEventFormView(); 
+            updateUI(); 
+            saveCloudData();
         }
 
         function deleteFamilyEvent(id) { familyEvents = familyEvents.filter(e => e.id !== id); updateUI(); saveCloudData(); }
 
+        function formatGermanDate(dateStr) {
+            if (!dateStr) return "";
+            const parts = dateStr.split('-');
+            if (parts.length !== 3) return dateStr;
+            return `${parts[2]}.${parts[1]}.${parts[0]}`;
+        }
+
         function renderUpcomingEvents() {
             const container = document.getElementById('upcoming-events-list'); container.innerHTML = '';
+            const titleEl = document.getElementById('events-list-title');
             const today = new Date().toISOString().split('T')[0];
-            let valid = familyEvents.filter(e => e.date >= today).sort((a,b) => a.date.localeCompare(b.date)).slice(0, 2);
-            if (valid.length === 0) { container.innerHTML = '<p class="text-xs text-muted text-center py-4">Keine Termine.</p>'; return; }
+            
+            // Präzise Sortierung: Datum vergleichen, bei Gleichheit die Uhrzeit vergleichen
+            let valid = familyEvents.filter(e => e.date >= today).sort((a,b) => {
+                if (a.date !== b.date) {
+                    return a.date.localeCompare(b.date);
+                }
+                const timeA = a.time || "00:00";
+                const timeB = b.time || "00:00";
+                return timeA.localeCompare(timeB);
+            }).slice(0, 5); // Kapazität auf die nächsten 5 Termine erhöht
+            
+            // Dynamischer Titel je nach Anzahl der Termine
+            if (valid.length === 0) {
+                titleEl.innerText = "📌 Keine anstehenden Termine";
+                container.innerHTML = '<p class="text-xs text-muted text-center py-4">Keine Termine.</p>'; 
+                return; 
+            } else if (valid.length === 1) {
+                titleEl.innerText = "📌 Der nächste Familien-Termin";
+            } else {
+                titleEl.innerText = `📌 Die nächsten ${valid.length} Familien-Termine`;
+            }
+
             valid.forEach(e => {
                 const div = document.createElement('div');
                 div.className = 'flex justify-between items-center p-2 rounded-xl border border-custom bg-gray-500/5';
-                div.innerHTML = `<div><p class="text-sm font-semibold">${e.title}</p><p class="text-[11px] text-muted">${e.date}</p></div><button onclick="deleteFamilyEvent('${e.id}')" class="text-gray-400 hover:text-rose-500 text-lg px-2">&times;</button>`;
+                
+                const timeStr = e.time ? ` um ${e.time} Uhr` : '';
+                const dateFormatted = formatGermanDate(e.date);
+
+                div.innerHTML = `<div><p class="text-sm font-semibold">${e.title}</p><p class="text-[11px] text-muted">${dateFormatted}${timeStr}</p></div><button onclick="deleteFamilyEvent('${e.id}')" class="text-gray-400 hover:text-rose-500 text-lg px-2">&times;</button>`;
                 container.appendChild(div);
             });
         }
 
         function setDefaultDate() {
-            const today = new Date().toISOString().split('T')[0];
+            const now = new Date();
+            const today = now.toISOString().split('T')[0];
+            const currentTime = String(now.getHours()).padStart(2, '0') + ":" + String(now.getMinutes()).padStart(2, '0');
             document.getElementById('transaction-date').value = today;
             document.getElementById('event-date').value = today;
+            document.getElementById('event-time').value = currentTime;
         }
 
         function applyTheme() {
@@ -412,7 +520,15 @@
             });
 
             const total = carryOver + (inc - exp - sav);
-            document.getElementById('total-balance').innerText = `${total.toFixed(2).replace('.', ',')} €`;
+            const balanceEl = document.getElementById('total-balance');
+            balanceEl.innerText = `${total.toFixed(2).replace('.', ',')} €`;
+            
+            if (total >= 0) {
+                balanceEl.className = "text-3xl font-bold mt-1 text-emerald-500";
+            } else {
+                balanceEl.className = "text-3xl font-bold mt-1 text-rose-500";
+            }
+
             document.getElementById('carry-over-info').innerText = `Übertrag aus Vormonaten: ${carryOver.toFixed(2).replace('.', ',')} €`;
 
             const goal = savingsGoals[year] || 0;
@@ -433,8 +549,26 @@
                 filtered.forEach(t => {
                     const idx = transactions.indexOf(t);
                     const div = document.createElement('div');
-                    div.className = 'flex justify-between items-center p-3 rounded-xl border bg-gray-500/5';
-                    div.innerHTML = `<div><p class="font-medium text-sm">${t.description}</p><p class="text-xs text-muted">${t.category} • ${t.date}</p></div><div><span class="font-semibold text-sm">${t.type==='income'?'+':'-'}${t.amount.toFixed(2)} €</span><button onclick="deleteTransaction(${idx})" class="ml-3 text-gray-400 hover:text-rose-500">&times;</button></div>`;
+                    
+                    let borderClass = "", textClass = "", prefix = "";
+                    if (t.type === 'income') {
+                        borderClass = "border-l-4 border-emerald-500";
+                        textClass = "text-emerald-500";
+                        prefix = "+";
+                    } else if (t.type === 'expense') {
+                        borderClass = "border-l-4 border-rose-500";
+                        textClass = "text-rose-500";
+                        prefix = "-";
+                    } else if (t.type === 'savings') {
+                        borderClass = "border-l-4 border-blue-500";
+                        textClass = "text-blue-500";
+                        prefix = "➔";
+                    }
+
+                    const formattedTxDate = formatGermanDate(t.date);
+
+                    div.className = `flex justify-between items-center p-3 rounded-xl border border-custom bg-gray-500/5 ${borderClass}`;
+                    div.innerHTML = `<div><p class="font-medium text-sm">${t.description}</p><p class="text-xs text-muted">${t.category} • ${formattedTxDate}</p></div><div><span class="font-bold text-sm ${textClass}">${prefix}${t.amount.toFixed(2)} €</span><button onclick="deleteTransaction(${idx})" class="ml-3 text-gray-400 hover:text-rose-500">&times;</button></div>`;
                     list.appendChild(div);
                 });
             }
