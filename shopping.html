@@ -69,13 +69,13 @@
             <div class="app-card rounded-2xl p-5 border border-custom shadow-sm">
                 <h4 class="text-sm font-bold uppercase tracking-wider mb-4 border-b border-custom pb-2">➕ Artikel hinzufügen</h4>
                 <div class="flex flex-col sm:flex-row gap-3">
-                    <input type="text" id="item-name" placeholder="Was wird gebraucht? (z.B. Milch)" class="flex-1 p-2.5 rounded-xl border border-custom bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    <input type="text" id="item-name" placeholder="Was wird gebraucht? (z.B. Kerrygold Butter)" class="flex-1 p-2.5 rounded-xl border border-custom bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
                     <button id="add-item-btn" class="bg-amber-500 hover:bg-amber-600 text-white font-semibold p-2.5 rounded-xl text-sm transition shadow-md shadow-amber-500/10 whitespace-nowrap">Hinzufügen</button>
                 </div>
             </div>
 
             <div class="app-card rounded-2xl p-5 border border-custom shadow-sm">
-                <h4 class="text-sm font-bold uppercase tracking-wider mb-4 border-b border-custom pb-2">📋 Offene Einkäufe</h4>
+                <h4 class="text-sm font-bold uppercase tracking-wider mb-4 border-b border-custom pb-2">📋 Offene Einkäufe & Preis-Check</h4>
                 <div id="shopping-list" class="space-y-2.5">
                     <p class="text-muted text-center py-4 text-sm font-light">Lade Einkaufsliste...</p>
                 </div>
@@ -89,7 +89,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 
     <script>
-        // Firebase Konfiguration (Muss exakt mit der index.html übereinstimmen)
         const firebaseConfig = {
             apiKey: "AIzaSyC3GG3kGs4ofwg6qsjWcZC3nkn0SrjVJ3A",
             authDomain: "haushaltsbuch-4ea86.firebaseapp.com",
@@ -110,7 +109,6 @@
         let shoppingItems = [];
         let currentTheme = localStorage.getItem('theme') || 'light';
 
-        // Auth Status überwachen
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 currentUser = user;
@@ -137,7 +135,6 @@
 
         function startRealtimeListener() {
             if (unsubscribeRealtime) unsubscribeRealtime();
-            // Nutzt dasselbe Dokument in Firestore wie das Haushaltsbuch
             unsubscribeRealtime = db.collection("haushaltsbuecher").doc(activeAccountId).onSnapshot((docSnap) => {
                 const data = docSnap.exists ? docSnap.data() : {};
                 shoppingItems = data.shoppingItems || [];
@@ -162,6 +159,7 @@
             shoppingItems.push({
                 id: Date.now().toString(),
                 name: name,
+                bestPrice: "", // Optionaler Bestpreis
                 createdAt: new Date().toISOString()
             });
 
@@ -176,6 +174,23 @@
             saveCloudData();
         }
 
+        // Aktualisiert oder speichert den manuellen Bestpreis für einen Artikel
+        function updateBestPrice(id, value) {
+            const item = shoppingItems.find(i => i.id === id);
+            if (item) {
+                item.bestPrice = value;
+                saveCloudData();
+            }
+        }
+
+        // Suchfunktion für den günstigsten Online- und Einzelhandelspreis via Google Shopping / Geizhals
+        function searchCheapestPrice(itemName) {
+            const searchQuery = encodeURIComponent(itemName);
+            // Nutzt Google Shopping (Filtert automatisch nach aktuellen Online- & lokalen Einzelhandelspreisen)
+            const url = `https://www.google.com/search?tbm=shop&q=${searchQuery}`;
+            window.open(url, '_blank');
+        }
+
         function updateUI() {
             const list = document.getElementById('shopping-list');
             if (!list) return;
@@ -186,18 +201,32 @@
                 return;
             }
 
-            // Sortiert nach Erstellungsdatum (neueste oben)
             shoppingItems.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
             shoppingItems.forEach(item => {
                 const div = document.createElement('div');
-                div.className = 'flex justify-between items-center p-3 rounded-xl border border-custom bg-gray-500/5 border-l-4 border-amber-500';
+                div.className = 'flex flex-col md:flex-row md:items-center justify-between p-3 rounded-xl border border-custom bg-gray-500/5 border-l-4 border-amber-500 gap-3';
+                
                 div.innerHTML = `
-                    <div>
-                        <p class="font-medium text-sm">${item.name}</p>
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2">
+                            <p class="font-medium text-sm text-title">${item.name}</p>
+                            <button onclick="searchCheapestPrice('${item.name.replace(/'/g, "\\'")}')" class="p-1 rounded bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 text-xs flex items-center gap-1 transition" title="Günstigsten Online-/Einzelhandelspreis suchen">
+                                <span>🔍</span> <span class="text-[10px] font-bold">Preis prüfen</span>
+                            </button>
+                        </div>
+                        <div class="mt-1 flex items-center gap-1.5">
+                            <span class="text-[11px] text-muted whitespace-nowrap">Unser Bestpreis:</span>
+                            <input type="text" 
+                                value="${item.bestPrice || ''}" 
+                                placeholder="z.B. 1,49 € bei REWE" 
+                                onchange="updateBestPrice('${item.id}', this.value)"
+                                class="bg-transparent border-b border-dashed border-custom text-[11px] focus:outline-none focus:border-blue-500 w-full max-w-[180px] text-title font-medium"
+                            >
+                        </div>
                     </div>
-                    <div>
-                        <button onclick="deleteItem('${item.id}')" class="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 text-xs px-3 py-1.5 rounded-lg font-semibold transition">
+                    <div class="flex items-center justify-end shrink-0">
+                        <button onclick="deleteItem('${item.id}')" class="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 text-xs px-3 py-1.5 rounded-lg font-semibold transition w-full md:w-auto text-center">
                             ✓ Erledigt
                         </button>
                     </div>
@@ -206,7 +235,6 @@
             });
         }
 
-        // Theme Funktionen
         function applyTheme() {
             const body = document.getElementById('app-body'), btn = document.getElementById('theme-btn');
             body.className = "font-sans min-h-screen pb-10 " + (currentTheme === 'dark' ? 'dark-mode' : 'light-mode');
@@ -217,16 +245,15 @@
         document.getElementById('theme-btn').addEventListener('click', () => { 
             currentTheme = currentTheme === 'light' ? 'dark' : 'light'; 
             applyTheme(); 
+            updateUI();
         });
 
-        // Event Listener
         document.getElementById('add-item-btn').addEventListener('click', addItem);
         document.getElementById('item-name').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') addItem();
         });
         document.getElementById('logout-btn').addEventListener('click', () => auth.signOut());
 
-        // Initialisierung
         applyTheme();
     </script>
 </body>
