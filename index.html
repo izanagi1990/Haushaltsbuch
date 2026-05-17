@@ -1,3 +1,80 @@
+Gemini
+Finanz-Trendbild mit separaten Linien
+Neuer Chat
+Meine Inhalte
+Gems
+Chats
+Finanz-Trendbild mit separaten Linien
+Aktuelle KI-Trends: Agenten, Regulierung, Industrie
+Aktuelle KI-Trends: Agenten, Regulierung, Industrie
+Aktuelle KI-Trends: Agenten, Regulierung, Industrie
+Empfehlungen für YouTube Longvideos
+Beliebte YouTube Shorts Trends
+KI-Tools für Faceless Shorts
+Faceless Shorts: Dein Startleitfaden
+Mit KI Geld verdienen 2026
+Tomatenpflanzen im Garten pflanzen
+KI-Personen erstellen: Bilder, Videos, Chatbots
+Stechender Fingerspitzen-Schmerz: Ursachen, Hilfe
+Lotus: Beste Valorant Champions
+Ersatzteil für Fahrradschaltwerk
+Ersatzteile für Shimano Schaltwerk
+Fahrrad-Schaltwerk Ersatzteil Ratgeber
+Shimano Schalt-Brems-Hebel Ersatz
+Ersatz für Schalt-Bremshebel-Einheit
+Ersatzteil für Shimano Schaltwerk
+Kona Rove AL 700 vs. 650 Vergleich
+Greeting and Offer of Help
+Langstreckenradfahren: Dein Einstieg Guide
+Letzte Frage im Chatverlauf
+Shimano Schalt-Brems-Hebel Ersatzteil
+Ersatzteile für Shimano Acera RD-M360
+Ersatzteilsuche: Shimano Acera Schaltwerk
+Terminvereinbarung beim Zahnarzt
+Fahrradpflege für den Balkon
+Aufstehen! Es ist Zeit.
+Ein Glas Wein und Prost
+Sportverein: Organisatorische Trägerschaft
+Geschafft: Erholung nach Arbeitswoche
+Folgetag Schreibweise und Bedeutung
+Kopfschmerz am Wochenende: Ursachen und Linderung
+
+Aktivitäten
+
+Einstellungen & Hilfe
+Bad Rappenau-Zimmerhof, Deutschland
+Basierend auf deinen Orten (Zuhause)
+Standort aktualisieren
+Unterhaltung mit Gemini
+Diesen Script bitte beim Trendbild Einamen Ausgaben und Sparen mit jeweil unterschiedlichen linien in einer x und y darstellung darstellen und auch das sparziel nicht als ziel darstellen sondern das war erspart wurde
+
+Ich habe das Skript in Ihrer index.html erfolgreich aktualisiert.
+
+Hier sind die vorgenommenen Änderungen am Trendbild-Diagramm (Chart.js):
+
+X/Y-Darstellung über den Zeitverlauf: Die X-Achse zeigt nun übersichtlich die einzelnen Tage des jeweils ausgewählten Monats an (z. B. 1. bis 31.).
+
+Drei separate Linien: Es wurden drei eigenständige Linien mit unterschiedlichen Farben und Bezeichnungen angelegt:
+
+Grüne Linie: 💰 Einnahmen
+
+Rote Linie: 🌹 Ausgaben
+
+Blaue Linie: ⭐ Erspartes (das, was tatsächlich zur Seite gelegt wurde)
+
+Sparziel entfernt: Das statische Jahres-Sparziel wurde komplett aus der Trendgrafik entfernt, sodass ausschließlich Ihre realen Finanzdaten und das tatsächlich Ersparte abgebildet werden.
+
+Die aktualisierte Datei steht hier für Sie bereit:
+HTML-Symbol
+ index 
+HTML
+
+
+
+
+
+Gemini ist eine KI und kann Fehler machen, auch bei Informationen über Personen. Datenschutz und GeminiWird in einem neuen Fenster geöffnet
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -507,25 +584,109 @@
             saveCloudData();
         }
 
-        function renderChart(inc, exp, goal) {
+        
+        function renderChart() {
             const ctx = document.getElementById('financeChart').getContext('2d');
             if (financeChart) financeChart.destroy();
+            
+            const selMon = document.getElementById('month-filter').value;
+            if (!selMon) return;
+            
+            const [yearStr, monthStr] = selMon.split('-');
+            const daysInMonth = new Date(parseInt(yearStr), parseInt(monthStr), 0).getDate();
+            
+            // X-Achse: Tage des Monats
+            const labels = Array.from({length: daysInMonth}, (_, i) => `${i + 1}.`);
+            
+            const incomeData = new Array(daysInMonth).fill(0);
+            const expenseData = new Array(daysInMonth).fill(0);
+            const savingsData = new Array(daysInMonth).fill(0);
+            
+            // Daten nach Tagen filtern und aggregieren
+            transactions.forEach(t => {
+                if (t.monthStr === selMon && t.date) {
+                    const day = parseInt(t.date.split('-')[2]);
+                    if (day >= 1 && day <= daysInMonth) {
+                        if (t.type === 'income') incomeData[day - 1] += t.amount;
+                        else if (t.type === 'expense') expenseData[day - 1] += t.amount;
+                        else if (t.type === 'savings') savingsData[day - 1] += t.amount;
+                    }
+                }
+            });
+            
+            // Optional: Wenn ein kumulativer Verlauf gewünscht ist, kann man dies aktivieren.
+            // Lassen Sie uns tägliche Werte anzeigen, aber als durchgezogene Trendlinien.
             
             financeChart = new Chart(ctx, {
                 type: 'line',
                 data: { 
-                    labels: ['Einnahmen', 'Ausgaben', 'Sparziel'], 
-                    datasets: [{ 
-                        label: 'Finanztrend',
-                        data: [inc, exp, goal], 
-                        borderColor: '#3b82f6', 
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        borderWidth: 3,
-                        pointBackgroundColor: ['#10b981', '#f43f5e', '#3b82f6'],
-                        pointRadius: 6,
-                        tension: 0.3,
-                        fill: true
-                    }] 
+                    labels: labels, 
+                    datasets: [
+                        { 
+                            label: '💰 Einnahmen',
+                            data: incomeData, 
+                            borderColor: '#10b981', 
+                            backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                            borderWidth: 2.5,
+                            pointRadius: 2,
+                            tension: 0.2,
+                            fill: false
+                        },
+                        { 
+                            label: '🌹 Ausgaben',
+                            data: expenseData, 
+                            borderColor: '#f43f5e', 
+                            backgroundColor: 'rgba(244, 63, 94, 0.05)',
+                            borderWidth: 2.5,
+                            pointRadius: 2,
+                            tension: 0.2,
+                            fill: false
+                        },
+                        { 
+                            label: '⭐ Erspartes',
+                            data: savingsData, 
+                            borderColor: '#3b82f6', 
+                            backgroundColor: 'rgba(59, 130, 246, 0.05)',
+                            borderWidth: 2.5,
+                            pointRadius: 2,
+                            tension: 0.2,
+                            fill: false
+                        }
+                    ] 
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { 
+                        legend: { 
+                            display: true,
+                            labels: {
+                                color: currentTheme === 'dark' ? '#f3f4f6' : '#1f2937',
+                                font: { size: 11 }
+                            }
+                        } 
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: currentTheme === 'dark' ? '#334155' : '#e5e7eb' },
+                            ticks: {
+                                color: currentTheme === 'dark' ? '#9ca3af' : '#6b7280',
+                                callback: function(value) { return value + ' €'; }
+                            }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                color: currentTheme === 'dark' ? '#9ca3af' : '#6b7280',
+                                maxTicksLimit: 12
+                            }
+                        }
+                    }
+                }
+            });
+        }
+] 
                 },
                 options: { 
                     responsive: true, 
@@ -615,7 +776,7 @@
                 }
             }
 
-            renderChart(inc, exp + sav, goal);
+            renderChart();
 
             const filtered = transactions.filter(t => t.monthStr === selMon);
             if (filtered.length === 0) { list.innerHTML = '<p class="text-muted text-center py-4 text-sm font-light">Keine Einträge.</p>'; }
@@ -681,3 +842,5 @@
     </script>
 </body>
 </html>
+index.html
+index.html wird angezeigt.
