@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Unser Haushaltsbuch & Familienkalender</title>
     
-    <link rel="apple-touch-icon" href="app-icon.png?v=1">
-    <link rel="icon" type="image/png" href="app-icon.png?v=1">
+    <link class="apple-touch-icon" href="app-icon.png?v=1">
+    <link class="icon" type="image/png" href="app-icon.png?v=1">
     
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -51,6 +51,8 @@
         <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
             <h1 class="text-xl font-bold tracking-tight">📊 Haushaltsbuch & Kalender</h1>
             <div class="flex items-center space-x-2">
+                <a href="shopping.html" class="p-2 rounded-lg bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 font-semibold text-xs transition flex items-center gap-1">🛒 Einkaufsliste</a>
+                
                 <button id="toggle-partner-area-btn" class="hidden p-2 rounded-lg bg-gray-500/10 hover:bg-gray-500/20 font-medium text-xs transition">🔗 Partner verknüpfen</button>
                 <button id="theme-btn" class="p-2 rounded-lg bg-gray-500/10 hover:bg-gray-500/20 text-lg transition">☀️</button>
                 <button id="logout-btn" class="p-2 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 font-medium text-xs transition">Abmelden</button>
@@ -252,7 +254,7 @@
         let isLoginMode = true;
         let showTransactions = true;
         let showEventForm = false; 
-        let forceShowGoalInput = false; // Steuert die Sichtbarkeit des Sparziel-Formulars
+        let forceShowGoalInput = false;
 
         const monthNames = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
 
@@ -473,7 +475,7 @@
                 filter.appendChild(opt);
             }
             filter.addEventListener('change', () => {
-                forceShowGoalInput = false; // Bei Monats-/Jahreswechsel Einklappzustand zurücksetzen
+                forceShowGoalInput = false;
                 updateUI();
             });
         }
@@ -483,7 +485,7 @@
             const val = parseFloat(document.getElementById('savings-goal-input').value);
             if (isNaN(val)) return alert("Bitte gültigen Betrag eingeben!");
             savingsGoals[year] = val; 
-            forceShowGoalInput = false; // Formular wieder schließen
+            forceShowGoalInput = false;
             updateUI(); 
             saveCloudData();
         }
@@ -492,7 +494,6 @@
             const ctx = document.getElementById('financeChart').getContext('2d');
             if (financeChart) financeChart.destroy();
             
-            // Konfiguration als Trendbild (Line-Chart)
             financeChart = new Chart(ctx, {
                 type: 'line',
                 data: { 
@@ -571,7 +572,6 @@
 
             document.getElementById('carry-over-info').innerText = `Übertrag aus Vormonaten: ${carryOver.toFixed(2).replace('.', ',')} €`;
 
-            // Logik für das dynamische Ein- & Ausblenden des Sparziels pro Jahr
             const goal = savingsGoals[year] || 0;
             const formEl = document.getElementById('savings-goal-form');
             const infoEl = document.getElementById('savings-goal-filled-info');
@@ -587,13 +587,12 @@
                 document.getElementById('goal-status-text').innerText = `${yearSav.toFixed(2)} / ${goal} €`;
                 document.getElementById('progress-bar').style.width = `${pct}%`;
             } else {
-                // Wenn kein Ziel für das Jahr definiert ist (oder auf "Ändern" geklickt wurde)
                 formEl.classList.remove('hidden');
                 infoEl.classList.add('hidden');
                 document.getElementById('savings-goal-input').value = goal > 0 ? goal : '';
                 
                 if (goal === 0) {
-                    prog.classList.add('hidden'); // Ausblenden der Fortschrittslinie bei Jahreswechsel ohne Ziel
+                    prog.classList.add('hidden');
                 } else {
                     prog.classList.remove('hidden');
                 }
@@ -642,7 +641,6 @@
 
         function deleteTransaction(i) { transactions.splice(i, 1); updateUI(); saveCloudData(); }
 
-        // Event-Listener für das Einblenden des Ziel-Formulars zum Bearbeiten
         document.getElementById('edit-goal-btn').addEventListener('click', () => {
             forceShowGoalInput = true;
             updateUI();
