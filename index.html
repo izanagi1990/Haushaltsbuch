@@ -122,11 +122,18 @@
                     <label class="block text-xs font-semibold uppercase tracking-wider text-muted mb-1">Monat auswählen</label>
                     <select id="month-filter" class="custom-select w-full p-2 rounded-xl border border-custom text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer transition-colors duration-200"></select>
                 </div>
+                
                 <div id="savings-goal-card" class="app-card rounded-2xl p-4 border border-custom shadow-sm md:col-span-2 flex flex-col justify-between transition-all duration-300">
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-muted mb-1">Gesamt-Sparziel für das komplette Jahr festlegen</label>
-                    <div class="flex space-x-2">
-                        <input type="number" id="savings-goal-input" step="0.01" placeholder="z.B. 6000 für das ganze Jahr" class="flex-1 p-2 rounded-xl border border-custom bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
-                        <button id="save-goal-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 rounded-xl text-sm transition shadow-sm">Jahresziel speichern</button>
+                    <div id="savings-goal-form">
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-muted mb-1">Gesamt-Sparziel für das komplette Jahr festlegen</label>
+                        <div class="flex space-x-2">
+                            <input type="number" id="savings-goal-input" step="0.01" placeholder="z.B. 6000 für das ganze Jahr" class="flex-1 p-2 rounded-xl border border-custom bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+                            <button id="save-goal-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 rounded-xl text-sm transition shadow-sm">Jahresziel speichern</button>
+                        </div>
+                    </div>
+                    <div id="savings-goal-filled-info" class="hidden flex justify-between items-center w-full py-1">
+                        <p class="text-xs font-medium text-emerald-500">✓ Jahres-Sparziel erfolgreich hinterlegt.</p>
+                        <button id="edit-goal-btn" class="text-xs bg-gray-500/10 hover:bg-gray-500/20 px-2.5 py-1 rounded-lg font-semibold transition">⚙️ Ziel ändern</button>
                     </div>
                 </div>
             </div>
@@ -141,6 +148,17 @@
                 <div class="app-card rounded-2xl p-4 border border-custom shadow-sm md:col-span-2 h-48 flex items-center justify-center">
                     <canvas id="financeChart"></canvas>
                 </div>
+            </div>
+
+            <div id="progress-container" class="app-card rounded-2xl p-4 border border-custom shadow-sm hidden space-y-2">
+                <div class="flex justify-between items-center text-xs font-semibold">
+                    <span id="progress-text" class="text-title">Jahresziel erreicht: 0%</span>
+                    <span id="goal-status-text" class="text-muted">0 / 0 €</span>
+                </div>
+                <div class="w-full bg-gray-500/10 rounded-full h-2.5 overflow-hidden">
+                    <div id="progress-bar" class="bg-blue-500 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <p id="savings-detail-text" class="text-xs text-center font-medium"></p>
             </div>
 
             <div class="app-card rounded-2xl p-5 border border-custom shadow-sm">
@@ -165,17 +183,6 @@
                 </div>
             </div>
 
-            <div id="progress-container" class="app-card rounded-2xl p-4 border border-custom shadow-sm hidden space-y-2">
-                <div class="flex justify-between items-center text-xs font-semibold">
-                    <span id="progress-text" class="text-title">Jahresziel erreicht: 0%</span>
-                    <span id="goal-status-text" class="text-muted">0 / 0 €</span>
-                </div>
-                <div class="w-full bg-gray-500/10 rounded-full h-2.5 overflow-hidden">
-                    <div id="progress-bar" class="bg-blue-500 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
-                </div>
-                <p id="savings-detail-text" class="text-xs text-center font-medium"></p>
-            </div>
-
             <div class="app-card rounded-2xl p-5 border border-custom shadow-sm">
                 <button id="toggle-transactions-btn" class="w-full flex justify-between items-center text-sm font-bold uppercase tracking-wider border-b border-custom pb-2 text-left focus:outline-none cursor-pointer">
                     <span>📋 Buchungen in diesem Monat</span>
@@ -192,7 +199,7 @@
     <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none transition-opacity duration-300">
         <div class="app-card rounded-2xl p-5 border border-custom max-w-md w-full shadow-2xl space-y-4">
             <div class="flex justify-between items-center border-b border-custom pb-2">
-                <h3 class="text-base font-bold">⚙ Monatliche Fixkosten (Automatisch)</h3>
+                <h3 class="text-base font-bold">⚙  Monatliche Fixkosten (Automatisch)</h3>
                 <button id="close-settings-btn" class="text-xl text-muted hover:text-title font-bold">&times;</button>
             </div>
             <p class="text-xs text-muted leading-relaxed">Hier eingerichtete Beträge werden in jedem neuen Monat automatisch als Ausgabe vom Haushaltsbuch verbucht.</p>
@@ -245,6 +252,7 @@
         let isLoginMode = true;
         let showTransactions = true;
         let showEventForm = false; 
+        let forceShowGoalInput = false; // Steuert die Sichtbarkeit des Sparziel-Formulars
 
         const monthNames = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
 
@@ -464,23 +472,57 @@
                 if (i === 0) opt.selected = true;
                 filter.appendChild(opt);
             }
-            filter.addEventListener('change', updateUI);
+            filter.addEventListener('change', () => {
+                forceShowGoalInput = false; // Bei Monats-/Jahreswechsel Einklappzustand zurücksetzen
+                updateUI();
+            });
         }
 
         function saveSavingsGoal() {
             const year = document.getElementById('month-filter').value.split('-')[0];
             const val = parseFloat(document.getElementById('savings-goal-input').value);
-            if (isNaN(val)) return;
-            savingsGoals[year] = val; updateUI(); saveCloudData();
+            if (isNaN(val)) return alert("Bitte gültigen Betrag eingeben!");
+            savingsGoals[year] = val; 
+            forceShowGoalInput = false; // Formular wieder schließen
+            updateUI(); 
+            saveCloudData();
         }
 
         function renderChart(inc, exp, goal) {
             const ctx = document.getElementById('financeChart').getContext('2d');
             if (financeChart) financeChart.destroy();
+            
+            // Konfiguration als Trendbild (Line-Chart)
             financeChart = new Chart(ctx, {
-                type: 'bar',
-                data: { labels: ['Einnahmen', 'Ausgaben', 'Sparziel'], datasets: [{ data: [inc, exp, goal], backgroundColor: ['#10b981', '#f43f5e', '#3b82f6'] }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                type: 'line',
+                data: { 
+                    labels: ['Einnahmen', 'Ausgaben', 'Sparziel'], 
+                    datasets: [{ 
+                        label: 'Finanztrend',
+                        data: [inc, exp, goal], 
+                        borderColor: '#3b82f6', 
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 3,
+                        pointBackgroundColor: ['#10b981', '#f43f5e', '#3b82f6'],
+                        pointRadius: 6,
+                        tension: 0.3,
+                        fill: true
+                    }] 
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: currentTheme === 'dark' ? '#334155' : '#e5e7eb' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
             });
         }
 
@@ -529,15 +571,33 @@
 
             document.getElementById('carry-over-info').innerText = `Übertrag aus Vormonaten: ${carryOver.toFixed(2).replace('.', ',')} €`;
 
+            // Logik für das dynamische Ein- & Ausblenden des Sparziels pro Jahr
             const goal = savingsGoals[year] || 0;
+            const formEl = document.getElementById('savings-goal-form');
+            const infoEl = document.getElementById('savings-goal-filled-info');
             const prog = document.getElementById('progress-container');
-            if (goal > 0) {
+            
+            if (goal > 0 && !forceShowGoalInput) {
+                formEl.classList.add('hidden');
+                infoEl.classList.remove('hidden');
                 prog.classList.remove('hidden');
+                
                 let pct = Math.min(100, Math.round((yearSav / goal) * 100));
                 document.getElementById('progress-text').innerText = `Jahresziel ${year}: ${pct}%`;
                 document.getElementById('goal-status-text').innerText = `${yearSav.toFixed(2)} / ${goal} €`;
                 document.getElementById('progress-bar').style.width = `${pct}%`;
-            } else { prog.classList.add('hidden'); }
+            } else {
+                // Wenn kein Ziel für das Jahr definiert ist (oder auf "Ändern" geklickt wurde)
+                formEl.classList.remove('hidden');
+                infoEl.classList.add('hidden');
+                document.getElementById('savings-goal-input').value = goal > 0 ? goal : '';
+                
+                if (goal === 0) {
+                    prog.classList.add('hidden'); // Ausblenden der Fortschrittslinie bei Jahreswechsel ohne Ziel
+                } else {
+                    prog.classList.remove('hidden');
+                }
+            }
 
             renderChart(inc, exp + sav, goal);
 
@@ -581,6 +641,12 @@
         }
 
         function deleteTransaction(i) { transactions.splice(i, 1); updateUI(); saveCloudData(); }
+
+        // Event-Listener für das Einblenden des Ziel-Formulars zum Bearbeiten
+        document.getElementById('edit-goal-btn').addEventListener('click', () => {
+            forceShowGoalInput = true;
+            updateUI();
+        });
 
         document.getElementById('logout-btn').addEventListener('click', () => auth.signOut());
         document.getElementById('toggle-partner-area-btn').addEventListener('click', togglePartnerArea);
