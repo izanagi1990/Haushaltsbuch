@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Unser Haushaltsbuch & Familienkalender</title>
+    
+    <link class="apple-touch-icon" href="app-icon.png?v=1">
+    <link class="icon" type="image/png" href="app-icon.png?v=1">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .light-mode {
+            --bg-main: #f3f4f6;
+            --bg-card: #ffffff;
+            --text-title: #1f2937;
+            --text-muted: #6b7280;
+            --border-color: #e5e7eb;
+            --select-bg: #ffffff;
+            --select-text: #1f2937;
+        }
+        .dark-mode {
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --text-title: #f3f4f6;
+            --text-muted: #9ca3af;
+            --border-color: #334155;
+            --select-bg: #1e293b;
+            --select-text: #f3f4f6;
+        }
+        body { background-color: var(--bg-main); color: var(--text-title); transition: all 0.3s ease; overflow-x: hidden; }
+        .app-card { background-color: var(--bg-card); border-color: var(--border-color); }
+        .text-title { color: var(--text-title); }
+        .text-muted { color: var(--text-muted); }
+        .border-custom { border-color: var(--border-color); }
+        
+        .custom-select {
+            background-color: var(--bg-card) !important;
+            color: var(--text-title) !important;
+        }
+        .custom-select option {
+            background-color: var(--bg-card) !important;
+            color: var(--text-title) !important;
+        }
+    </style>
+</head>
+<body id="app-body" class="font-sans min-h-screen pb-10 light-mode">
+
+    <header class="app-card border-b border-custom shadow-sm sticky top-0 z-40 w-full overflow-x-hidden">
+        <div class="max-w-4xl mx-auto px-3 py-2 flex justify-between items-center gap-2">
+            <h1 class="text-base sm:text-xl font-bold tracking-tight truncate max-w-[140px] sm:max-w-none">
+                <span class="sm:hidden">📊 Haushaltsbuch</span>
+                <span class="hidden sm:inline">📊 Haushaltsbuch & Kalender</span>
+            </h1>
+            
+            <div class="flex items-center space-x-1 sm:space-x-2 shrink-0">
+                <a href="shopping.html" class="p-2 rounded-lg bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 font-semibold text-xs transition flex items-center gap-1" title="Einkaufsliste">
+                    <span>🛒</span>
+                    <span class="hidden md:inline">Einkaufsliste</span>
+                </a>
+                
+                <button id="toggle-partner-area-btn" class="hidden p-2 rounded-lg bg-gray-500/10 text-title hover:bg-gray-500/20 font-medium text-xs transition flex items-center gap-1" title="Partner verknüpfen">
+                    <span>🔗</span>
+                    <span class="hidden md:inline">Partner</span>
+                </button>
+                
+                <button id="theme-btn" class="p-2 rounded-lg bg-gray-500/10 hover:bg-gray-500/20 text-xs sm:text-sm transition" title="Design wechseln">☀️</button>
+                
+                <button id="logout-btn" class="p-2 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 font-medium text-xs transition flex items-center gap-1" title="Abmelden">
+                    <span>🚪</span>
+                    <span class="hidden md:inline">Abmelden</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 mt-6">
+
+        <div id="auth-container" class="max-w-md mx-auto app-card rounded-2xl p-6 border border-custom shadow-xl mt-12">
+            <h2 id="auth-title" class="text-xl font-bold text-center mb-6">🔑 Anmelden</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider mb-1 text-muted">E-Mail-Adresse</label>
+                    <input type="email" id="auth-email" placeholder="deine@email.de" class="w-full p-2.5 rounded-xl border border-custom bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider mb-1 text-muted">Passwort</label>
+                    <input type="password" id="auth-password" placeholder="••••••••" class="w-full p-2.5 rounded-xl border border-custom bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button id="auth-submit-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold p-2.5 rounded-xl text-sm transition mt-2 shadow-md shadow-blue-500/20">Einloggen</button>
+                <button id="auth-toggle-btn" class="w-full text-xs text-blue-500 hover:underline mt-2 text-center block">Noch kein Konto? Jetzt registrieren</button>
+            </div>
+        </div>
+
+        <div id="main-app-container" class="space-y-6 hidden">
+
+            <div id="partner-container" class="app-card rounded-2xl p-4 border border-custom shadow-sm grid grid-cols-1 md:grid-cols-2 gap-4 items-center hidden">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-muted">Deine ID (Für deinen Partner):</p>
+                    <p id="my-account-id" class="text-xs font-mono bg-gray-500/10 p-2 rounded-lg mt-1 select-all break-all text-title"></p>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-muted mb-1">Mit Partner verknüpfen (ID eintragen):</label>
+                    <div class="flex space-x-2">
+                        <input type="text" id="partner-id-input" placeholder="Partner ID einfügen oder leer lassen" class="flex-1 p-2 rounded-lg border border-custom bg-transparent text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        <button id="connect-partner-btn" class="bg-blue-500 text-white font-semibold px-3 py-2 rounded-lg text-xs transition hover:bg-blue-600">Speichern</button>
+                    </div>
+                    <p id="connected-status" class="text-[10px] text-emerald-500 mt-1 font-medium hidden">✓ Verbunden mit dem gemeinsamen Haushaltsbuch</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="app-card rounded-2xl p-4 border border-custom shadow-sm flex flex-col justify-between h-fit">
+                    <div>
+                        <button id="toggle-event-form-btn" class="w-full flex justify-between items-center text-xs font-bold uppercase tracking-wider text-muted text-left focus:outline-none cursor-pointer">
+                            <span>📅 Neuen Termin planen</span>
+                            <span id="event-toggle-arrow" class="text-[10px]">►</span>
+                        </button>
+                        <div id="event-form-container" class="space-y-2 hidden mt-3">
+                            <input type="text" id="event-title" placeholder="Was steht an? (z.B. GEZ zahlen)" class="w-full p-2 rounded-xl border border-custom bg-transparent text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="date" id="event-date" class="w-full p-2 rounded-xl border border-custom bg-transparent text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                <input type="time" id="event-time" class="w-full p-2 rounded-xl border border-custom bg-transparent text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
+                            </div>
+                            <button id="add-event-btn" class="w-full mt-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-xl text-xs transition shadow-sm">Termin hinzufügen</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="app-card rounded-2xl p-4 border border-custom shadow-sm md:col-span-2 flex flex-col justify-between">
+                    <h4 id="events-list-title" class="text-xs font-bold uppercase tracking-wider text-muted mb-2">📌 Die nächsten Termine</h4>
+                    <div id="upcoming-events-list" class="space-y-2 flex-1 flex flex-col justify-center min-h-[60px]"></div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="app-card rounded-2xl p-4 border border-custom shadow-sm">
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-muted mb-1">Monat auswählen</label>
+                    <select id="month-filter" class="custom-select w-full p-2 rounded-xl border border-custom text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer transition-colors duration-200"></select>
+                </div>
+                
+                <div id="savings-goal-card" class="app-card rounded-2xl p-4 border border-custom shadow-sm md:col-span-2 flex flex-col justify-between transition-all duration-300">
+                    <div id="savings-goal-form">
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-muted mb-1">Gesamt-Sparziel für das komplette Jahr festlegen</label>
+                        <div class="flex space-x-2">
+                            <input type="number" id="savings-goal-input" step="0.01" placeholder="z.B. 6000 für das ganze Jahr" class="flex-1 p-2 rounded-xl border border-custom bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+                            <button id="save-goal-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 rounded-xl text-sm transition shadow-sm">Jahresziel speichern</button>
+                        </div>
+                    </div>
+                    <div id="savings-goal-filled-info" class="hidden flex justify-between items-center w-full py-1">
+                        <p class="text-xs font-medium text-emerald-500">✓ Jahres-Sparziel erfolgreich hinterlegt.</p>
+                        <button id="edit-goal-btn" class="text-xs bg-gray-500/10 hover:bg-gray-500/20 px-2.5 py-1 rounded-lg font-semibold transition">⚙️ Ziel ändern</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="app-card rounded-2xl p-5 border border-custom shadow-sm flex flex-col justify-center">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-muted">Aktueller Kontostand</p>
+                    <h3 id="total-balance" class="text-3xl font-bold mt-1 transition-colors duration-300">0,00 €</h3>
+                    <p id="carry-over-info" class="text-[11px] text-muted mt-2 border-t border-custom pt-2 font-light">Übertrag aus Vormonaten: 0,00 €</p>
+                    <button id="open-settings-btn" class="w-full mt-4 bg-gray-500/10 hover:bg-gray-500/20 text-title text-xs font-semibold py-2 rounded-xl transition">⚙ Fixkosten verwalten</button>
+                </div>
+                <div class="app-card rounded-2xl p-4 border border-custom shadow-sm md:col-span-2 h-56 flex items-center justify-center relative">
+                    <canvas id="financeChart" class="max-h-full max-w-full"></canvas>
+                </div>
+            </div>
+
+            <div id="progress-container" class="app-card rounded-2xl p-4 border border-custom shadow-sm hidden space-y-2">
+                <div class="flex justify-between items-center text-xs font-semibold">
+                    <span id="progress-text" class="text-title">Jahresziel erreicht: 0%</span>
+                    <span id="goal-status-text" class="text-muted">0 / 0 €</span>
+                </div>
+                <div class="w-full bg-gray-500/10 rounded-full h-2.5 overflow-hidden">
+                    <div id="progress-bar" class="bg-blue-500 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <p id="savings-detail-text" class="text-xs text-center font-medium hidden"></p>
+            </div>
+
+            <div class="app-card rounded-2xl p-5 border border-custom shadow-sm">
+                <h4 class="text-sm font-bold uppercase tracking-wider mb-4 border-b border-custom pb-2">➕ Neuen Eintrag hinzufügen</h4>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <input type="text" id="description" placeholder="Name / Beschreibung" class="p-2.5 rounded-xl border border-custom bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    <input type="number" id="amount" step="0.01" placeholder="Betrag (€)" class="p-2.5 rounded-xl border border-custom bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    <select id="category" class="custom-select p-2.5 rounded-xl border border-custom text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        <option value="Gehalt/Einnahme">💰 Gehalt / Einnahme</option>
+                        <option value="Lebensmittel">🛒 Lebensmittel</option>
+                        <option value="Wohnen/Miete">🏠 Wohnen & Energie</option>
+                        <option value="Freizeit/Auto">🚗 Freizeit & Transport</option>
+                        <option value="Versicherung/Abo">📄 Verträge & Abos</option>
+                        <option value="Sonstiges">📦 Sonstiges</option>
+                    </select>
+                    <input type="date" id="transaction-date" class="p-2.5 rounded-xl border border-custom bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+                    <button id="add-income-btn" class="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold p-2.5 rounded-xl text-sm transition shadow-md shadow-emerald-500/10">＋ Einnahme buchen</button>
+                    <button id="add-expense-btn" class="bg-rose-500 hover:bg-rose-600 text-white font-semibold p-2.5 rounded-xl text-sm transition shadow-md shadow-rose-500/10">－ Ausgabe buchen</button>
+                    <button id="add-savings-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold p-2.5 rounded-xl text-sm transition shadow-md shadow-blue-500/10">➔ Aufs Jahres-Sparziel legen</button>
+                </div>
+            </div>
+
+            <div class="app-card rounded-2xl p-5 border border-custom shadow-sm">
+                <button id="toggle-transactions-btn" class="w-full flex justify-between items-center text-sm font-bold uppercase tracking-wider border-b border-custom pb-2 text-left focus:outline-none cursor-pointer">
+                    <span>📋 Buchungen in diesem Monat</span>
+                    <span id="toggle-arrow" class="text-xs transition-transform duration-200">▼</span>
+                </button>
+                <div id="transaction-list-container" class="space-y-2.5 mt-3 transition-all duration-300">
+                    <div id="transaction-list" class="space-y-2.5"></div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="app-card rounded-2xl p-5 border border-custom max-w-md w-full shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-custom pb-2">
+                <h3 class="text-base font-bold">⚙  Monatliche Fixkosten (Automatisch)</h3>
+                <button id="close-settings-btn" class="text-xl text-muted hover:text-title font-bold">&times;</button>
+            </div>
+            <p class="text-xs text-muted leading-relaxed">Hier eingerichtete Beträge werden in jedem neuen Monat automatisch als Ausgabe vom Haushaltsbuch verbucht.</p>
+            <div class="grid grid-cols-1 gap-2 border border-custom p-3 rounded-xl bg-gray-500/5">
+                <input type="text" id="rec-description" placeholder="z.B. Netflix, Miete..." class="p-2 rounded-lg border border-custom bg-transparent text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
+                <div class="flex space-x-2">
+                    <input type="number" id="rec-amount" step="0.01" placeholder="Betrag (€)" class="w-1/2 p-2 rounded-lg border border-custom bg-transparent text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    <select id="rec-category" class="custom-select w-1/2 p-2 rounded-lg border border-custom text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        <option value="Wohnen/Miete">🏠 Wohnen & Energie</option>
+                        <option value="Versicherung/Abo">📄 Verträge & Abos</option>
+                        <option value="Sonstiges">📦 Sonstiges</option>
+                    </select>
+                </div>
+                <button id="add-rec-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg text-xs transition">Fixkosten-Eintrag anlegen</button>
+            </div>
+            <div class="space-y-1.5 max-h-40 overflow-y-auto pr-1" id="recurring-list"></div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyC3GG3kGs4ofwg6qsjWcZC3nkn0SrjVJ3A",
+            authDomain: "haushaltsbuch-4ea86.firebaseapp.com",
+            projectId: "haushaltsbuch-4ea86",
+            storageBucket: "haushaltsbuch-4ea86.firebasestorage.app",
+            messagingSenderId: "639032934816",
+            appId: "1:639032934816:web:a1d42ee5c46982966324c5",
+            measurementId: "G-BSM6HL36QQ"
+        };
+
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore(app);
+        const auth = firebase.auth();
+
+        let currentUser = null;
+        let activeAccountId = null;
+        let unsubscribeRealtime = null;
+
+        let transactions = [];
+        let savingsGoals = {};
+        let recurringExpenses = [];
+        let appliedMonths = [];
+        let familyEvents = []; 
+        let currentTheme = localStorage.getItem('theme') || 'light';
+        let financeChart = null;
+        let isLoginMode = true;
+        let showTransactions = true;
+        let showEventForm = false; 
+        let forceShowGoalInput = false;
+
+        const monthNames = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('auth-container').classList.add('hidden');
+                document.getElementById('main-app-container').classList.remove('hidden');
+                document.getElementById('toggle-partner-area-btn').classList.remove('hidden');
+                await determineActiveAccount(user.uid);
+                startRealtimeListener();
+            } else {
+                currentUser = null; activeAccountId = null;
+                if (unsubscribeRealtime) unsubscribeRealtime();
+                document.getElementById('main-app-container').classList.add('hidden');
+                document.getElementById('auth-container').classList.remove('hidden');
+                document.getElementById('toggle-partner-area-btn').classList.add('hidden');
+            }
+        });
+
+        async function determineActiveAccount(uid) {
+            const myIdEl = document.getElementById('my-account-id');
+            if(myIdEl) myIdEl.innerText = uid;
+            
+            const userSnap = await db.collection("users").doc(uid).get();
+            if (userSnap.exists && userSnap.data().partnerId) {
+                activeAccountId = userSnap.data().partnerId;
+                if(document.getElementById('partner-id-input')) document.getElementById('partner-id-input').value = activeAccountId;
+                if(document.getElementById('connected-status')) document.getElementById('connected-status').classList.remove('hidden');
+            } else {
+                activeAccountId = uid;
+                if(document.getElementById('partner-id-input')) document.getElementById('partner-id-input').value = '';
+                if(document.getElementById('connected-status')) document.getElementById('connected-status').classList.add('hidden');
+            }
+        }
+
+        function startRealtimeListener() {
+            if (unsubscribeRealtime) unsubscribeRealtime();
+            unsubscribeRealtime = db.collection("haushaltsbuecher").doc(activeAccountId).onSnapshot((docSnap) => {
+                const data = docSnap.exists ? docSnap.data() : {};
+                transactions = data.transactions || [];
+                savingsGoals = data.savingsGoals || {};
+                recurringExpenses = data.recurringExpenses || [];
+                appliedMonths = data.appliedMonths || [];
+                familyEvents = data.familyEvents || []; 
+                updateUI();
+            });
+        }
+
+        async function saveCloudData() {
+            if (!activeAccountId) return;
+            try {
+                await db.collection("haushaltsbuecher").doc(activeAccountId).set({
+                    transactions, savingsGoals, recurringExpenses, appliedMonths, familyEvents 
+                }, { merge: true });
+            } catch (e) { console.error("Fehler: ", e); }
+        }
+
+        function togglePartnerArea() { document.getElementById('partner-container').classList.toggle('hidden'); }
+
+        async function connectPartner() {
+            const inputId = document.getElementById('partner-id-input').value.trim();
+            if (inputId === currentUser.uid) { alert("Du kannst dich nicht mit dir selbst verknüpfen."); return; }
+            await db.collection("users").doc(currentUser.uid).set({ partnerId: inputId });
+            alert(inputId ? "Verbunden!" : "Verbindung gelöst.");
+            await determineActiveAccount(currentUser.uid);
+            startRealtimeListener();
+        }
+
+        async function handleAuth() {
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value;
+            if (!email || !password) return alert("Felder ausfüllen!");
+            try {
+                if (isLoginMode) { await auth.signInWithEmailAndPassword(email, password); }
+                else { await auth.createUserWithEmailAndPassword(email, password); alert("Konto erstellt!"); }
+            } catch (e) { alert("Fehler: " + e.message); }
+        }
+
+        function toggleAuthMode() {
+            isLoginMode = !isLoginMode;
+            document.getElementById('auth-title').innerText = isLoginMode ? "🔑 Anmelden" : "📝 Registrieren";
+            document.getElementById('auth-submit-btn').innerText = isLoginMode ? "Einloggen" : "Konto erstellen";
+            document.getElementById('auth-toggle-btn').innerText = isLoginMode ? "Noch kein Konto? Registrieren" : "Hier einloggen";
+        }
+
+        function toggleEventFormView() {
+            showEventForm = !showEventForm;
+            const container = document.getElementById('event-form-container');
+            const arrow = document.getElementById('event-toggle-arrow');
+            if (showEventForm) {
+                container.classList.remove('hidden');
+                arrow.innerText = '▼';
+            } else {
+                container.classList.add('hidden');
+                arrow.innerText = '►';
+            }
+        }
+
+        document.getElementById('toggle-event-form-btn').addEventListener('click', toggleEventFormView);
+
+        function addFamilyEvent() {
+            const tEl = document.getElementById('event-title'), dEl = document.getElementById('event-date'), timeEl = document.getElementById('event-time');
+            if (!tEl.value.trim() || !dEl.value) return alert("Daten unvollständig.");
+            
+            familyEvents.push({ 
+                title: tEl.value.trim(), 
+                date: dEl.value, 
+                time: timeEl.value || "", 
+                id: Date.now().toString() 
+            });
+            
+            tEl.value = ''; 
+            setDefaultDate(); 
+            toggleEventFormView(); 
+            updateUI(); 
+            saveCloudData();
+        }
+
+        function deleteFamilyEvent(id) { familyEvents = familyEvents.filter(e => e.id !== id); updateUI(); saveCloudData(); }
+
+        function formatGermanDate(dateStr) {
+            if (!dateStr) return "";
+            const parts = dateStr.split('-');
+            if (parts.length !== 3) return dateStr;
+            return `${parts[2]}.${parts[1]}.${parts[0]}`;
+        }
+
+        function renderUpcomingEvents() {
+            const container = document.getElementById('upcoming-events-list'); container.innerHTML = '';
+            const titleEl = document.getElementById('events-list-title');
+            const today = new Date().toISOString().split('T')[0];
+            
+            let valid = familyEvents.filter(e => e.date >= today).sort((a,b) => {
+                if (a.date !== b.date) {
+                    return a.date.localeCompare(b.date);
+                }
+                const timeA = a.time || "00:00";
+                const timeB = b.time || "00:00";
+                return timeA.localeCompare(timeB);
+            }).slice(0, 5);
+            
+            if (valid.length === 0) {
+                titleEl.innerText = "📌 Keine anstehenden Termine";
+                container.innerHTML = '<p class="text-xs text-muted text-center py-4">Keine Termine.</p>'; 
+                return; 
+            } else if (valid.length === 1) {
+                titleEl.innerText = "📌 Der nächste Familien-Termin";
+            } else {
+                titleEl.innerText = `📌 Die nächsten ${valid.length} Familien-Termine`;
+            }
+
+            valid.forEach(e => {
+                const div = document.createElement('div');
+                div.className = 'flex justify-between items-center p-2 rounded-xl border border-custom bg-gray-500/5';
+                
+                const timeStr = e.time ? ` um ${e.time} Uhr` : '';
+                const dateFormatted = formatGermanDate(e.date);
+
+                div.innerHTML = `<div><p class="text-sm font-semibold">${e.title}</p><p class="text-[11px] text-muted">${dateFormatted}${timeStr}</p></div><button onclick="deleteFamilyEvent('${e.id}')" class="text-gray-400 hover:text-rose-500 text-lg px-2">&times;</button>`;
+                container.appendChild(div);
+            });
+        }
+
+        function setDefaultDate() {
+            const now = new Date();
+            const today = now.toISOString().split('T')[0];
+            const currentTime = String(now.getHours()).padStart(2, '0') + ":" + String(now.getMinutes()).padStart(2, '0');
+            if(document.getElementById('transaction-date')) document.getElementById('transaction-date').value = today;
+            if(document.getElementById('event-date')) document.getElementById('event-date').value = today;
+            if(document.getElementById('event-time')) document.getElementById('event-time').value = currentTime;
+        }
+
+        function applyTheme() {
+            const body = document.getElementById('app-body'), btn = document.getElementById('theme-btn');
+            body.className = "font-sans min-h-screen pb-10 " + (currentTheme === 'dark' ? 'dark-mode' : 'light-mode');
+            btn.innerText = currentTheme === 'dark' ? "🌙" : "☀️";
+            localStorage.setItem('theme', currentTheme);
+        }
+
+        document.getElementById('theme-btn').addEventListener('click', () => { currentTheme = currentTheme === 'light' ? 'dark' : 'light'; applyTheme(); updateUI(); });
+        function openSettings() { document.getElementById('settings-modal').classList.remove('opacity-0', 'pointer-events-none'); renderRecurringList(); }
+        function closeSettings() { document.getElementById('settings-modal').classList.add('opacity-0', 'pointer-events-none'); }
+
+        function addRecurringExpense() {
+            const d = document.getElementById('rec-description').value.trim(), a = parseFloat(document.getElementById('rec-amount').value), c = document.getElementById('rec-category').value;
+            if (!d || isNaN(a)) return alert("Eintrag prüfen.");
+            recurringExpenses.push({ description: d, amount: a, category: c });
+            document.getElementById('rec-description').value = ''; document.getElementById('rec-amount').value = '';
+            renderRecurringList(); checkAndApplyRecurring(); saveCloudData();
+        }
+
+        function deleteRecurringExpense(i) { recurringExpenses.splice(i, 1); renderRecurringList(); saveCloudData(); }
+
+        function renderRecurringList() {
+            const container = document.getElementById('recurring-list'); container.innerHTML = '';
+            recurringExpenses.forEach((item, index) => {
+                const div = document.createElement('div'); div.className = 'flex justify-between items-center p-2 rounded-lg bg-gray-500/5 text-xs';
+                div.innerHTML = `<div><p class="font-medium">${item.description}</p></div><div><span class="text-rose-500">-${item.amount.toFixed(2)} €</span><button onclick="deleteRecurringExpense(${index})" class="ml-2 text-gray-400 hover:text-rose-500 font-bold">&times;</button></div>`;
+                container.appendChild(div);
+            });
+        }
+
+        function checkAndApplyRecurring() {
+            const selMon = document.getElementById('month-filter').value;
+            if (!selMon || appliedMonths.includes(selMon)) return;
+            recurringExpenses.forEach(rec => {
+                transactions.push({ description: rec.description + ' (Fixkosten)', amount: rec.amount, category: rec.category, type: 'expense', date: new Date().toISOString().split('T')[0], monthStr: selMon });
+            });
+            if (recurringExpenses.length > 0) { appliedMonths.push(selMon); saveCloudData(); }
+        }
+
+        function initMonthFilter() {
+            const filter = document.getElementById('month-filter'), now = new Date();
+            for (let i = -6; i <= 6; i++) {
+                const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+                const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                const opt = document.createElement('option'); opt.value = val; opt.innerText = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+                if (i === 0) opt.selected = true;
+                filter.appendChild(opt);
+            }
+            filter.addEventListener('change', () => {
+                forceShowGoalInput = false;
+                updateUI();
+            });
+        }
+
+        function saveSavingsGoal() {
+            const year = document.getElementById('month-filter').value.split('-')[0];
+            const val = parseFloat(document.getElementById('savings-goal-input').value);
+            if (isNaN(val)) return alert("Bitte gültigen Betrag eingeben!");
+            savingsGoals[year] = val; 
+            forceShowGoalInput = false;
+            updateUI(); 
+            saveCloudData();
+        }
+
+        function renderChart(inc, exp, currentSavings) {
+            const ctx = document.getElementById('financeChart').getContext('2d');
+            if (financeChart) financeChart.destroy();
+            
+            const isDark = currentTheme === 'dark';
+            
+            // Wenn gar keine Daten existieren, füllen wir Dummy-Werte für ein schöneres UI
+            const hasData = inc > 0 || exp > 0 || currentSavings > 0;
+            const chartData = hasData ? [inc, exp, currentSavings] : [1, 0, 0];
+            const chartLabels = hasData ? ['Einnahmen', 'Ausgaben', 'Gespartes'] : ['Keine Daten vorhanden', '', ''];
+            
+            financeChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: { 
+                    labels: chartLabels, 
+                    datasets: [{ 
+                        data: chartData, 
+                        backgroundColor: hasData ? [
+                            '#10b981', // Smaragd-Grün für Einnahmen
+                            '#f43f5e', // Rosé-Rot für Ausgaben
+                            '#6366f1'  // Indigo/Blau für Gespartes
+                        ] : [isDark ? '#334155' : '#e5e7eb'],
+                        borderWidth: isDark ? 3 : 2,
+                        borderColor: isDark ? '#1e293b' : '#ffffff',
+                        hoverOffset: 6,
+                        borderRadius: 4
+                    }] 
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    cutout: '70%', // Macht den Ring dünner und eleganter
+                    plugins: { 
+                        legend: { 
+                            display: true,
+                            position: 'right',
+                            labels: {
+                                color: isDark ? '#f3f4f6' : '#1f2937',
+                                font: { size: 12, weight: '500' },
+                                padding: 15,
+                                boxWidth: 12
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    if (!hasData) return ' Keine Einträge gebucht';
+                                    let label = context.label || '';
+                                    if (label) label += ': ';
+                                    if (context.raw !== undefined) label += context.raw.toFixed(2).replace('.', ',') + ' €';
+                                    return ' ' + label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function toggleTransactionsView() {
+            showTransactions = !showTransactions;
+            const container = document.getElementById('transaction-list-container');
+            const arrow = document.getElementById('toggle-arrow');
+            if (showTransactions) {
+                container.classList.remove('hidden');
+                arrow.innerText = '▼';
+            } else {
+                container.classList.add('hidden');
+                arrow.innerText = '►';
+            }
+        }
+
+        document.getElementById('toggle-transactions-btn').addEventListener('click', toggleTransactionsView);
+
+        function updateUI() {
+            checkAndApplyRecurring(); renderUpcomingEvents();
+            const list = document.getElementById('transaction-list'), selMon = document.getElementById('month-filter').value;
+            if (!selMon) return;
+            list.innerHTML = '';
+            let carryOver = 0, inc = 0, exp = 0, sav = 0, yearSav = 0, year = selMon.split('-')[0];
+
+            transactions.forEach(t => {
+                const amt = t.type === 'income' ? t.amount : -t.amount;
+                if (t.monthStr < selMon) carryOver += amt;
+                else if (t.monthStr === selMon) {
+                    if (t.type === 'income') inc += t.amount;
+                    if (t.type === 'expense') exp += t.amount;
+                    if (t.type === 'savings') sav += t.amount;
+                }
+                if (t.monthStr && t.monthStr.split('-')[0] === year && t.type === 'savings') yearSav += t.amount;
+            });
+
+            const total = carryOver + (inc - exp - sav);
+            const balanceEl = document.getElementById('total-balance');
+            balanceEl.innerText = `${total.toFixed(2).replace('.', ',')} €`;
+            
+            if (total >= 0) {
+                balanceEl.className = "text-3xl font-bold mt-1 text-emerald-500";
+            } else {
+                balanceEl.className = "text-3xl font-bold mt-1 text-rose-500";
+            }
+
+            document.getElementById('carry-over-info').innerText = `Übertrag aus Vormonaten: ${carryOver.toFixed(2).replace('.', ',')} €`;
+
+            const goal = savingsGoals[year] || 0;
+            const formEl = document.getElementById('savings-goal-form');
+            const infoEl = document.getElementById('savings-goal-filled-info');
+            const prog = document.getElementById('progress-container');
+            
+            if (goal > 0 && !forceShowGoalInput) {
+                if(formEl) formEl.classList.add('hidden');
+                if(infoEl) infoEl.classList.remove('hidden');
+                if(prog) prog.classList.remove('hidden');
+                
+                let pct = Math.min(100, Math.round((yearSav / goal) * 100));
+                if(document.getElementById('progress-text')) document.getElementById('progress-text').innerText = `Jahresziel ${year}: ${pct}%`;
+                if(document.getElementById('goal-status-text')) document.getElementById('goal-status-text').innerText = `${yearSav.toFixed(2)} / ${goal} €`;
+                if(document.getElementById('progress-bar')) document.getElementById('progress-bar').style.width = `${pct}%`;
+            } else {
+                if(formEl) formEl.classList.remove('hidden');
+                if(infoEl) infoEl.classList.add('hidden');
+                if(document.getElementById('savings-goal-input')) document.getElementById('savings-goal-input').value = goal > 0 ? goal : '';
+                
+                if (goal === 0) {
+                    if(prog) prog.classList.add('hidden');
+                } else {
+                    if(prog) prog.classList.remove('hidden');
+                }
+            }
+
+            // Rendert das modernisierte Doughnut-Diagramm mit dem aktuell gesparten monatlichen Wert
+            renderChart(inc, exp, sav);
+
+            const filtered = transactions.filter(t => t.monthStr === selMon);
+            if (filtered.length === 0) { list.innerHTML = '<p class="text-muted text-center py-4 text-sm font-light">Keine Einträge.</p>'; }
+            else {
+                filtered.forEach(t => {
+                    const idx = transactions.indexOf(t);
+                    const div = document.createElement('div');
+                    
+                    let borderClass = "", textClass = "", prefix = "";
+                    if (t.type === 'income') {
+                        borderClass = "border-l-4 border-emerald-500";
+                        textClass = "text-emerald-500";
+                        prefix = "+";
+                    } else if (t.type === 'expense') {
+                        borderClass = "border-l-4 border-rose-500";
+                        textClass = "text-rose-500";
+                        prefix = "-";
+                    } else if (t.type === 'savings') {
+                        borderClass = "border-l-4 border-blue-500";
+                        textClass = "text-blue-500";
+                        prefix = "➔";
+                    }
+
+                    const formattedTxDate = formatGermanDate(t.date);
+
+                    div.className = `flex justify-between items-center p-3 rounded-xl border border-custom bg-gray-500/5 ${borderClass}`;
+                    div.innerHTML = `<div><p class="font-medium text-sm">${t.description}</p><p class="text-xs text-muted">${t.category} • ${formattedTxDate}</p></div><div><span class="font-bold text-sm ${textClass}">${prefix}${t.amount.toFixed(2)} €</span><button onclick="deleteTransaction(${idx})" class="ml-3 text-gray-400 hover:text-rose-500">&times;</button></div>`;
+                    list.appendChild(div);
+                });
+            }
+        }
+
+        function addTransaction(type) {
+            const d = document.getElementById('description').value.trim(), a = parseFloat(document.getElementById('amount').value), c = document.getElementById('category').value, dt = document.getElementById('transaction-date').value, m = document.getElementById('month-filter').value;
+            if (!d || isNaN(a) || !dt) return alert("Daten prüfen!");
+            transactions.push({ description: d, amount: a, category: type==='savings'?'Sparziel':c, type, date: dt, monthStr: m });
+            document.getElementById('description').value = ''; document.getElementById('amount').value = '';
+            setDefaultDate(); updateUI(); saveCloudData();
+        }
+
+        function deleteTransaction(i) { transactions.splice(i, 1); updateUI(); saveCloudData(); }
+
+        document.getElementById('edit-goal-btn').addEventListener('click', () => {
+            forceShowGoalInput = true;
+            updateUI();
+        });
+
+        document.getElementById('logout-btn').addEventListener('click', () => auth.signOut());
+        document.getElementById('toggle-partner-area-btn').addEventListener('click', togglePartnerArea);
+        document.getElementById('auth-submit-btn').addEventListener('click', handleAuth);
+        document.getElementById('auth-toggle-btn').addEventListener('click', toggleAuthMode);
+        document.getElementById('connect-partner-btn').addEventListener('click', connectPartner);
+        document.getElementById('save-goal-btn').addEventListener('click', saveSavingsGoal);
+        document.getElementById('open-settings-btn').addEventListener('click', openSettings);
+        document.getElementById('close-settings-btn').addEventListener('click', closeSettings);
+        document.getElementById('add-rec-btn').addEventListener('click', addRecurringExpense);
+        document.getElementById('add-event-btn').addEventListener('click', addFamilyEvent);
+        document.getElementById('add-income-btn').addEventListener('click', () => addTransaction('income'));
+        document.getElementById('add-expense-btn').addEventListener('click', () => addTransaction('expense'));
+        document.getElementById('add-savings-btn').addEventListener('click', () => addTransaction('savings'));
+
+        initMonthFilter(); setDefaultDate(); applyTheme();
+    </script>
+</body>
+</html>
